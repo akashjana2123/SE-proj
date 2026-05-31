@@ -30,9 +30,9 @@
         </div>
 
         <div class="role-tabs">
-          <button class="role-tab active" data-role="admin" onclick="selectRole('admin')">Admin</button>
-          <button class="role-tab" data-role="faculty" onclick="selectRole('faculty')">Faculty</button>
-          <button class="role-tab" data-role="student" onclick="selectRole('student')">Student</button>
+          <button type="button" class="role-tab active" data-role="admin" onclick="selectRole('admin')">Admin</button>
+          <button type="button" class="role-tab" data-role="faculty" onclick="selectRole('faculty')">Faculty</button>
+          <button type="button" class="role-tab" data-role="student" onclick="selectRole('student')">Student</button>
         </div>
 
         {% if error %}
@@ -65,6 +65,10 @@
       document.querySelectorAll('.role-tab').forEach(btn => btn.classList.remove('active'));
       document.querySelector(`[data-role="${role}"]`).classList.add('active');
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      selectRole('admin');
+    });
   </script>
 </body>
 </html>

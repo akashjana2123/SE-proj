@@ -9,18 +9,20 @@ from sqlalchemy import func
 def get_logged_admin():
     """Retrieves authenticated admin context from DB or falls back gracefully."""
     if "role" in session and session["role"] == "admin":
-        # Unifying key check to 'email' matching your controllers.py login script
         admin_obj = Admin.query.filter_by(admin_email=session.get("email")).first()
         if admin_obj:
             return admin_obj
-    return Admin.query.first() or Admin(admin_name="Dr. Rahul Sharma", admin_email="admin@university.edu")
 
 
 # ─────────────────────────────────────────────────────────
 #  BASE ENTRY POINT
 # ─────────────────────────────────────────────────────────
+# In controllers/admin_controllers.py
 @app.route("/admin_dashboard", methods=["GET"])
 def admin_dashboard():
+    admin = get_logged_admin()
+    if not admin:
+        return redirect(url_for("login"))
     return render_template("admin.html")
 
 
@@ -102,10 +104,13 @@ def get_dashboard_metrics():
 def api_faculty_root():
     if request.method == "POST":
         data = request.get_json() or {}
+        # In controllers/admin_controllers.py inside api_faculty_root()
         new_f = Faculty(
-            faculty_name=data.get("name"), faculty_email=data.get("email"),
-            faculty_password="pbkdf2:sha256:default_hashed_pass", # Note: Wrap with your security hashing functions
-            department=data.get("department"), designation=data.get("designation", "Assistant Professor"),
+            faculty_name=data.get("name"), 
+            faculty_email=data.get("email"),
+            faculty_password=data.get("password", "demo123"), # Match your login testing credentials
+            department=data.get("department"), 
+            designation=data.get("designation", "Assistant Professor"),
             is_active=bool(data.get("is_active", True))
         )
         db.session.add(new_f)

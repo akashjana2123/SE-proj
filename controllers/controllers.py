@@ -16,8 +16,8 @@ def home():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    # If a user is already logged in, redirect them to their respective dashboard
-    if "role" in session:
+    # If this is a GET request and a user is already logged in, redirect them to their dashboard.
+    if request.method == 'GET' and "role" in session:
         if session["role"] == "admin":
             return redirect(url_for("admin_dashboard"))
         elif session["role"] == "faculty":
@@ -34,7 +34,7 @@ def login():
         
         email = request.form.get('email')
         password = request.form.get('password')
-        role = request.form.get('role')  # Expecting 'admin', 'faculty', or 'student'
+        role = (request.form.get('role') or '').strip().lower()  # Expecting 'admin', 'faculty', or 'student'
 
         if role == 'admin':
             admin_obj = Admin.query.filter_by(admin_email=email).first()

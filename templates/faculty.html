@@ -9,41 +9,55 @@
 </head>
 <body>
 
+  <!-- Toast wrapper notification engine -->
   <div class="toast-wrap" id="toastWrap"></div>
 
   <div id="screen-app">
+    <!-- Sidebar Navigation Core -->
     <aside class="sidebar">
       <div class="sidebar-logo">
-        <div class="logo-row"><div class="logo-icon">🎓</div><div><div class="logo-text">TIU</div><div class="logo-sub">Faculty Console</div></div></div>
+        <div class="logo-row">
+          <div class="logo-icon">🎓</div>
+          <div>
+            <div class="logo-text">TIU</div>
+            <div class="logo-sub">Faculty Console</div>
+          </div>
+        </div>
       </div>
       <div class="sidebar-user">
         <div class="user-role" style="color: var(--faculty-c)">FACULTY EVALUATOR</div>
-        <div class="user-name">Prof. Anita Mishra</div>
-        <div class="user-email" id="userEmailTag">faculty@university.edu</div>
+        <div class="user-name" id="sidebarFacultyName">Loading User...</div>
+        <div class="user-email" id="userEmailTag">Loading Email...</div>
       </div>
       <nav class="sidebar-nav">
-        <button class="nav-item active" onclick="switchFacultyTab('dashboard', this)">📊 Dashboard Overview</button>
-        <button class="nav-item" onclick="switchFacultyTab('marks', this)">✏️ Entry / Audit Logs</button>
-        <button class="nav-item" onclick="switchFacultyTab('backlogs', this)">⚠️ Deficit Portfolios</button>
-        <button class="nav-item" onclick="switchFacultyTab('password', this)">🔑 Account Security</button>
+        <button class="nav-item active" id="nav-dashboard" onclick="switchFacultyTab('dashboard', this)">📊 Dashboard Overview</button>
+        <button class="nav-item" id="nav-marks" onclick="switchFacultyTab('marks', this)">✏️ Entry / Update Marks</button>
+        <button class="nav-item" id="nav-backlogs" onclick="switchFacultyTab('backlogs', this)">⚠️ Deficit Portfolios</button>
+        <button class="nav-item" id="nav-password" onclick="switchFacultyTab('password', this)">🔑 Account Security</button>
       </nav>
       <div class="sidebar-footer">
-        <button class="btn-logout" onclick="window.location.href='index.html'">🚪 Sign Out</button>
+        <button class="btn-logout" onclick="window.location.href='/logout'">🚪 Sign Out</button>
       </div>
     </aside>
 
+    <!-- Main Workspace Frame -->
     <main class="main-content">
       <div class="topbar">
         <div class="topbar-title" id="pageTitle">Faculty Workspace</div>
         <div class="topbar-right"><span class="topbar-badge badge-faculty">EVALUATOR MATRIX</span></div>
       </div>
-      <div class="page-body" id="facultyContainer"></div>
+      <div class="page-body" id="facultyContainer">
+        <div style="padding:40px; text-align:center; color:var(--ink3);">Connecting to database matrix telemetry pipelines...</div>
+      </div>
     </main>
   </div>
 
   <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    if(urlParams.get('email')) document.getElementById('userEmailTag').textContent = urlParams.get('email');
+    // Global Session Cache Mappings
+    let facultyCache = null;
+    let assignedSubjectsCache = [];
+    let currentGradingStep = 1;
+    let selectedGradingParams = { semester: null, subject_id: null, academic_year: '2024-25' };
 
     function showToast(msg, type='info') {
       const wrap = document.getElementById('toastWrap');
@@ -54,58 +68,386 @@
       setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity .4s'; setTimeout(()=>t.remove(), 400); }, 3500);
     }
 
-    function switchFacultyTab(tabId, element) {
-      if(element) {
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-        element.classList.add('active');
-      }
+    // Initialize Telemetry on Boot
+    async function initFacultyTelemetry() {
+      try {
+        const res = await fetch('/api/faculty/metrics');
+        if (!res.ok) { window.location.href = '/login'; return; }
+        
+        facultyCache = await res.json();
+        document.getElementById('sidebarFacultyName').textContent = facultyCache.faculty_name;
+        document.getElementById('userEmailTag').textContent = facultyCache.faculty_email;
 
-      const container = document.getElementById('facultyContainer');
-      if (tabId === 'dashboard') {
-        container.innerHTML = `
-          <div class="dashboard-welcome"><h2>Hello, Professor Mishra 👋</h2><p>System configuration status allocation for active allocations.</p></div>
-          <div class="stat-grid">
-            <div class="stat-card"><div class="stat-icon si-blue">📚</div><div class="stat-value">3</div><div class="stat-label">Assigned Subjects</div></div>
-            <div class="stat-card"><div class="stat-icon si-green">✅</div><div class="stat-value">248</div><div class="stat-label">Evaluations Logged</div></div>
-            <div class="stat-card"><div class="stat-icon si-teal">⚠️</div><div class="stat-value">3</div><div class="stat-label">Active Backlogs</div></div>
-          </div>
-        `;
-      } else if (tabId === 'marks') {
-        container.innerHTML = `
-          <div class="card">
-            <div class="card-header">Academic Score Management Matrix</div>
-            <div class="card-body">
-              <table class="marks-table" style="width:100%">
-                <thead><tr><th>Student Roll</th><th>Legal Name</th><th>Max Score Weight</th><th>Obtained Assessment</th></tr></thead>
-                <tbody>
-                  <tr><td>CS2101</td><td class="td-bold">Priya Mondal</td><td>100 Allocation</td><td><input type="number" value="82" class="field"></td></tr>
-                  <tr><td>CS2102</td><td class="td-bold">Arjun Das</td><td>100 Allocation</td><td><input type="number" value="74" class="field"></td></tr>
-                </tbody>
-              </table>
-              <div style="margin-top:16px; text-align:right"><button class="btn btn-blue" onclick="showToast('Grade Registry Batch Changes Committed Successfully','success')">💾 Update Grade Changes</button></div>
-            </div>
-          </div>
-        `;
-      } else if (tabId === 'backlogs') {
-        container.innerHTML = `
-          <div class="section-header"><h3>Active Outstanding Arrear Ledgers</h3></div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Deficit Scholar</th><th>Identifier</th><th>Subject Field Outstandings</th><th>Action Vector</th></tr></thead>
-              <tbody>
-                <tr><td class="td-bold">Rahul Dey</td><td>CS2104</td><td>CS503 - Computer Networks</td><td><button class="btn btn-green btn-sm" onclick="showToast('Cleared Assessment Event Registered','success')">✅ Sign Off / Clear</button></td></tr>
-              </tbody>
-            </table>
-          </div>
-        `;
-      } else if (tabId === 'password') {
-        container.innerHTML = `
-          <div class="card" style="max-width:480px"><div class="card-header">Update Authentication Matrix</div><div class="card-body"><div class="field"><label>Target Pass Phrase</label><input type="password" class="field"></div><br><button class="btn btn-blue" onclick="showToast('Passkey altered securely.','success')">Commit Change</button></div></div>
-        `;
+        // Pre-fetch assigned subjects for Step 1 mapping workflows
+        const subRes = await fetch('/api/faculty/subjects/fetch');
+        assignedSubjectsCache = await subRes.json();
+
+        // Boot system dashboard view
+        switchFacultyTab('dashboard');
+      } catch (err) {
+        showToast("Error establishing sync with database matrix pipelines.", "error");
       }
     }
 
-    switchFacultyTab('dashboard');
+    // Master Routing Interface
+    async function switchFacultyTab(tabId, element) {
+      if(element) {
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        element.classList.add('active');
+      } else {
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        const activeBtn = document.getElementById(`nav-${tabId}`);
+        if(activeBtn) activeBtn.classList.add('active');
+      }
+
+      const container = document.getElementById('facultyContainer');
+      
+      // ──────────────────────────────────────────────────
+      //  1. VIEW ENGINE: DYNAMIC METRICS DASHBOARD
+      // ──────────────────────────────────────────────────
+      if (tabId === 'dashboard') {
+        document.getElementById('pageTitle').textContent = 'Dashboard System Management';
+        
+        // Dynamic fetch fallback verification block
+        const res = await fetch('/api/faculty/metrics');
+        facultyCache = await res.json();
+
+        container.innerHTML = `
+          <div class="dashboard-welcome">
+            <h2>Hello, ${facultyCache.faculty_name} 👋</h2>
+            <p>University Operational State Telemetry Monitoring Panel.</p>
+          </div>
+          <div class="stat-grid">
+            <div class="stat-card"><div class="stat-icon si-blue">📚</div><div class="stat-value">${facultyCache.total_subjects}</div><div class="stat-label">Assigned Subjects</div></div>
+            <div class="stat-card"><div class="stat-icon si-green">✅</div><div class="stat-value">${facultyCache.evaluations_logged}</div><div class="stat-label">Evaluations Logged</div></div>
+            <div class="stat-card"><div class="stat-icon si-teal">⚠️</div><div class="stat-value">${facultyCache.active_backlogs}</div><div class="stat-label">Active Backlogs</div></div>
+          </div>
+          
+          <div class="card" style="margin-top: 20px;">
+            <div class="card-header">Assigned Course Syllabus Matrix Mapping</div>
+            <div class="card-body" style="padding:0;">
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Catalog Code</th><th>Course Title Heading</th><th>Target Stage Plan</th><th>Branch Node Mapping</th></tr></thead>
+                  <tbody>
+                    ${assignedSubjectsCache.map(sub=>`
+                      <tr>
+                        <td class="td-bold">${sub.code}</td>
+                        <td><strong>${sub.name}</strong></td>
+                        <td><span class="badge b-blue">Semester ${sub.semester}</span></td>
+                        <td><span class="badge b-purple">${sub.branch}</span></td>
+                      </tr>`).join('')}
+                    ${assignedSubjectsCache.length === 0 ? '<tr><td colspan="4" style="text-align:center; color:var(--ink3); padding:16px;">No courses currently mapped to your credentials profile.</td></tr>' : ''}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>`;
+      } 
+      
+      // ──────────────────────────────────────────────────
+      //  2. VIEW ENGINE: 3-STEP SEAMLESS EVALUATION LEDGER
+      // ──────────────────────────────────────────────────
+      else if (tabId === 'marks') {
+        document.getElementById('pageTitle').textContent = 'Academic Score Management Matrix';
+        renderGradingWorkflowEngine(container);
+      } 
+      
+      // ──────────────────────────────────────────────────
+      //  3. VIEW ENGINE: AUTOMATED READ-ONLY ARREARS LIST
+      // ──────────────────────────────────────────────────
+      else if (tabId === 'backlogs') {
+        document.getElementById('pageTitle').textContent = 'Institutional Outstanding Arrear Ledgers';
+        container.innerHTML = `<div style='padding:20px; color:var(--ink3)'>Streaming arrears tracking matrix registers...</div>`;
+        
+        const res = await fetch('/api/faculty/backlogs/view');
+        const backlogsList = await res.json();
+
+        container.innerHTML = `
+          <div class="section-header">
+            <h3>Active Outstanding Arrear Ledgers</h3>
+            <span class="badge b-red" style="font-size:12px">${backlogsList.length} Active System Arrears</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Deficit Scholar</th><th>Roll Identifier Code</th><th>Course Reference Code</th><th>Course Title Heading</th><th>Batch Year Map</th><th>Status Label</th></tr></thead>
+              <tbody>
+                ${backlogsList.map(b=>`
+                <tr>
+                  <td class="td-bold">${b.student_name}</td>
+                  <td><span class="badge b-gray" style="font-family:var(--font-mono)">${b.roll_no}</span></td>
+                  <td class="td-bold">${b.subject_code}</td>
+                  <td>${b.subject_name}</td>
+                  <td style="font-family:var(--font-mono)">${b.academic_year}</td>
+                  <td><span class="badge b-red">⚠️ ${b.status}</span></td>
+                </tr>`).join('')}
+                ${backlogsList.length === 0 ? '<tr><td colspan="6" style="text-align:center; color:var(--ink3); padding:24px;">🟢 Operational Pass: No structural academic failures monitored across current assignments catalog.</td></tr>' : ''}
+              </tbody>
+            </table>
+          </div>`;
+      } 
+      
+      // ──────────────────────────────────────────────────
+      //  4. VIEW ENGINE: SECURED PASSKEY MUTATION PORTAL
+      // ──────────────────────────────────────────────────
+      else if (tabId === 'password') {
+        document.getElementById('pageTitle').textContent = 'Credential Access Security Configuration';
+        container.innerHTML = `
+          <div class="card" style="max-width:480px">
+            <div class="card-header">Update Authentication Matrix</div>
+            <div class="card-body">
+              <div class="field" style="margin-bottom:14px">
+                <label>New Pass Phrase String Key</label>
+                <input type="password" id="facultyNewPwdInput" class="field" placeholder="Minimum 8 elements required">
+              </div>
+              <div class="field" style="margin-bottom:20px">
+                <label>Confirm Pass Phrase Verification String</label>
+                <input type="password" id="facultyConfirmPwdInput" class="field" placeholder="Match new passphrase entry">
+              </div>
+              <button class="btn btn-blue" onclick="executeFacultyPasswordPatch()">Commit Dynamic Credential Alteration</button>
+            </div>
+          </div>`;
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────
+    //  WORKFLOW IMPLEMENTATION: 3-STEP PROGRESSIVE GRADING LEDGER
+    // ─────────────────────────────────────────────────────────
+    function renderGradingWorkflowEngine(targetContainer) {
+      // Top pipeline progress bar indicator framework
+      let stepsHeaderHtml = `
+        <div class="steps" style="max-width:600px; margin-bottom:24px; display:flex; align-items:center;">
+          <div class="step ${currentGradingStep >= 1 ? 'done' : ''} ${currentGradingStep === 1 ? 'active' : ''}"><div class="step-num">${currentGradingStep > 1 ? '✓' : '1'}</div><span>Configuration Filters</span></div>
+          <div class="step-line ${currentGradingStep > 1 ? 'done' : ''}"></div>
+          <div class="step ${currentGradingStep >= 2 ? 'done' : ''} ${currentGradingStep === 2 ? 'active' : ''}"><div class="step-num">${currentGradingStep > 2 ? '✓' : '2'}</div><span>Roster Matrix Evaluation</span></div>
+          <div class="step-line ${currentGradingStep > 2 ? 'done' : ''}"></div>
+          <div class="step ${currentGradingStep === 3 ? 'done active' : ''}"><div class="step-num">3</div><span>Verification View</span></div>
+        </div>`;
+
+      // Pipeline execution node block switching logic
+      if (currentGradingStep === 1) {
+        targetContainer.innerHTML = stepsHeaderHtml + `
+          <div class="card" style="max-width:560px">
+            <div class="card-header">Batch Parameter Selection Engine</div>
+            <div class="card-body">
+              <div class="field" style="margin-bottom:12px">
+                <label>Academic Catalog Course Assignment</label>
+                <select id="w_subject_id">
+                  ${assignedSubjectsCache.map(s => `<option value="${s.id}" ${selectedGradingParams.subject_id == s.id ? 'selected':''}>${s.code} - ${s.name} (Sem ${s.semester})</option>`).join('')}
+                </select>
+              </div>
+              <div class="field" style="margin-bottom:12px">
+                <label>Target Execution Semester Track</label>
+                <select id="w_semester">
+                  ${[1,2,3,4,5,6,7,8].map(n => `<option value="${n}" ${selectedGradingParams.semester == n ? 'selected':''}>Semester ${n}</option>`).join('')}
+                </select>
+              </div>
+              <div class="field" style="margin-bottom:20px">
+                <label>Academic Registration Year</label>
+                <select id="w_academic_year">
+                  <option value="2024-25" ${selectedGradingParams.academic_year === '2024-25' ? 'selected':''}>2024–25</option>
+                  <option value="2025-26" ${selectedGradingParams.academic_year === '2025-26' ? 'selected':''}>2025–26</option>
+                </select>
+              </div>
+              <button class="btn btn-blue" onclick="advanceGradingWorkflowToStep2()">Continue to Evaluation Matrix →</button>
+            </div>
+          </div>`;
+      } 
+      else if (currentGradingStep === 2) {
+        targetContainer.innerHTML = stepsHeaderHtml + `
+          <div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-size:14px; color:var(--ink2)">Working Target Node: <strong id="rosterTitleHeader">Loading...</strong></div>
+            <button class="btn btn-ghost btn-sm" onclick="rollbackGradingWorkflowStep()">🪃 Change Filters Mapping</button>
+          </div>
+          <div class="card">
+            <div class="card-header">Active Evaluation Score Input Matrix (Pass Criterion &ge; 40 Marks)</div>
+            <div class="card-body" style="padding:0;">
+              <table class="marks-table" style="width:100%">
+                <thead><tr><th>Student Roll Code</th><th>Legal Profile Name</th><th>Max Score Allocation</th><th>Obtained Assessment Input</th><th>Ledger State</th></tr></thead>
+                <tbody id="rosterTableInsertNode"><tr><td colspan="5" style="text-align:center; padding:20px;">Streaming class datasets...</td></tr></tbody>
+              </table>
+            </div>
+            <div style="padding:16px 20px; border-top:1px solid var(--line); display:flex; gap:10px; justify-content:flex-end">
+              <button class="btn btn-blue" onclick="commitRosterEvaluationScoresData()">💾 Save Marks & Commit Ledger</button>
+            </div>
+          </div>`;
+        streamRosterDataFromServer();
+      } 
+      else if (currentGradingStep === 3) {
+        targetContainer.innerHTML = stepsHeaderHtml + `
+          <div class="alert alert-success">🎉 Data Registry Batch Changes Committed Successfully. Evaluation pipeline synchronized with global ledger matrices.</div>
+          <div class="section-header" style="margin-top:20px;">
+            <h3>Compiled Verification Summary Matrix View</h3>
+            <button class="btn btn-blue" onclick="resetGradingWorkflowEngineLoop()">⚙️ Start New Class Session Batch</button>
+          </div>
+          <div class="table-wrap">
+            <table style="width:100%">
+              <thead><tr><th>Student Roll Code</th><th>Legal Profile Name</th><th>Obtained Score Weight</th><th>Evaluation Evaluation Status Outcome</th></tr></thead>
+              <tbody id="verificationTableInsertNode"></tbody>
+            </table>
+          </div>`;
+        streamRosterDataFromServer(true);
+      }
+    }
+
+    // Workflow Actions Execution Loops
+    function advanceGradingWorkflowToStep2() {
+      selectedGradingParams.subject_id = document.getElementById('w_subject_id').value;
+      selectedGradingParams.semester = document.getElementById('w_semester').value;
+      selectedGradingParams.academic_year = document.getElementById('w_academic_year').value;
+
+      if(!selectedGradingParams.subject_id || !selectedGradingParams.semester) {
+        showToast("Parameter mapping incomplete: Verify inputs selections context.", "error"); return;
+      }
+      currentGradingStep = 2;
+      switchFacultyTab('marks');
+    }
+
+    function rollbackGradingWorkflowStep() {
+      currentGradingStep = 1;
+      switchFacultyTab('marks');
+    }
+
+    function resetGradingWorkflowEngineLoop() {
+      currentGradingStep = 1;
+      selectedGradingParams = { semester: null, subject_id: null, academic_year: '2024-25' };
+      switchFacultyTab('marks');
+    }
+
+    // Asynchronous Core Interaction Blocks
+    async function streamRosterDataFromServer(isVerificationStep = false) {
+      try {
+        const res = await fetch('/api/faculty/marks/load_roster', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(selectedGradingParams)
+        });
+        const data = await res.json();
+        
+        if(!isVerificationStep) {
+          document.getElementById('rosterTitleHeader').textContent = `${data.subject_code} - ${data.subject_name} (${selectedGradingParams.academic_year})`;
+          const tbody = document.getElementById('rosterTableInsertNode');
+          
+          if(data.roster.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--ink3);">No students tracked matching active configuration filters context.</td></tr>`;
+            return;
+          }
+
+          tbody.innerHTML = data.roster.map(row => `
+            <tr data-student-id="${row.student_id}">
+              <td style="font-family:var(--font-mono)">${row.roll_no}</td>
+              <td class="td-bold">${row.student_name}</td>
+              <td>100 Allocation Base</td>
+              <td>
+                <input type="number" class="field text-center class-mark-input" min="0" max="100" 
+                  value="${row.marks_obtained !== null ? row.marks_obtained : ''}" 
+                  placeholder="--" style="width:100px; display:inline-block;"
+                  oninput="if(parseInt(this.value)>100)this.value=100; if(parseInt(this.value)<0)this.value=0;">
+              </td>
+              <td><span class="badge ${row.status === 'Entered' ? 'b-green' : 'b-gray'}">${row.status}</span></td>
+            </tr>`).join('');
+        } else {
+          const tbody = document.getElementById('verificationTableInsertNode');
+          tbody.innerHTML = data.roster.map(row => {
+            const score = row.marks_obtained !== null ? row.marks_obtained : 0;
+            const passStatusBadge = score >= 40 ? '<span class="badge b-green">PASS</span>' : '<span class="badge b-red">FAIL / BACKLOG AUTO_TRIGGERED</span>';
+            return `
+              <tr>
+                <td style="font-family:var(--font-mono)">${row.roll_no}</td>
+                <td class="td-bold">${row.student_name}</td>
+                <td style="font-family:var(--font-mono)"><strong>${row.marks_obtained !== null ? row.marks_obtained : 'Not Entered'}</strong> / 100</td>
+                <td>${passStatusBadge}</td>
+              </tr>`;
+          }).join('');
+        }
+      } catch (err) {
+        showToast("Telemetry transaction timeout fault reading server tables.", "error");
+      }
+    }
+
+    async function commitRosterEvaluationScoresData() {
+      const inputRows = document.querySelectorAll('#rosterTableInsertNode tr');
+      const payloadScores = [];
+      let incompleteValidationTrigger = false;
+
+      inputRows.forEach(row => {
+        const studentId = row.getAttribute('data-student-id');
+        if(!studentId) return;
+
+        const inputVal = row.querySelector('.class-mark-input').value;
+        if(inputVal.trim() === "") { incompleteValidationTrigger = true; return; }
+
+        payloadScores.append({
+          student_id: parseInt(studentId),
+          marks_obtained: parseFloat(inputVal)
+        });
+      });
+
+      if(incompleteValidationTrigger) {
+        showToast("Commit fault: Every single evaluation element mapping input box requires an explicitly logged value parameter.", "error");
+        return;
+      }
+
+      const postPayload = {
+        semester: selectedGradingParams.semester,
+        subject_id: selectedGradingParams.subject_id,
+        academic_year: selectedGradingParams.academic_year,
+        scores: payloadScores
+      };
+
+      try {
+        const res = await fetch('/api/faculty/marks/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(postPayload)
+        });
+        const d = await res.json();
+        if(d.success) {
+          showToast(d.message, "success");
+          currentGradingStep = 3;
+          switchFacultyTab('marks');
+        } else {
+          showToast(d.message, "error");
+        }
+      } catch(err) {
+        showToast("Network pipeline write error: Save operation aborted by transport architecture.", "error");
+      }
+    }
+
+    async function executeFacultyPasswordPatch() {
+      const newPwd = document.getElementById('facultyNewPwdInput').value;
+      const confirmPwd = document.getElementById('facultyConfirmPwdInput').value;
+
+      if(!newPwd || newPwd.length < 8) {
+        showToast("Passphrase string transformation failure: Element size requirement threshold constraint mapping not achieved (>= 8 characters required).", "error");
+        return;
+      }
+      if(newPwd !== confirmPwd) {
+        showToast("Passphrase validation check mismatch.", "error");
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/faculty/change_password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ new_password: newPwd })
+        });
+        const data = await res.json();
+        if(data.success) {
+          showToast(data.message, "success");
+          document.getElementById('facultyNewPwdInput').value = '';
+          document.getElementById('facultyConfirmPwdInput').value = '';
+        } else {
+          showToast(data.message, "error");
+        }
+      } catch (err) {
+        showToast("Security synchronization update channel dropped.", "error");
+      }
+    }
+
+    // Run execution sequence instantly on page context bind load
+    initFacultyTelemetry();
   </script>
 </body>
 </html>
