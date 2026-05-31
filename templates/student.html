@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Portal - TIU</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/global.css">
+</head>
+<body>
+
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <div id="screen-app">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-row"><div class="logo-icon">🎓</div><div><div class="logo-text">TIU</div><div class="logo-sub">Scholar Registry</div></div></div>
+      </div>
+      <div class="sidebar-user">
+        <div class="user-role" style="color: var(--student-c)">UNDERGRADUATE CANDIDATE</div>
+        <div class="user-name">Priya Mondal</div>
+        <div class="user-email" id="userEmailTag">priya@university.edu</div>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" onclick="switchStudentTab('dashboard', this)">📊 Matrix Overview</button>
+        <button class="nav-item" onclick="switchStudentTab('result', this)">📄 View Academic Transcripts</button>
+        <button class="nav-item" onclick="switchStudentTab('backlogs', this)">⚠️ Structural Backlogs</button>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="btn-logout" onclick="window.location.href='index.html'">🚪 Terminate Portal Connection</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="topbar">
+        <div class="topbar-title" id="pageTitle">Scholar Record Desk</div>
+        <div class="topbar-right"><span class="topbar-badge badge-student">CANDIDATE DOSSIER</span></div>
+      </div>
+      <div class="page-body" id="studentContainer"></div>
+    </main>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    if(urlParams.get('email')) document.getElementById('userEmailTag').textContent = urlParams.get('email');
+
+    function showToast(msg, type='info') {
+      const wrap = document.getElementById('toastWrap');
+      const t = document.createElement('div');
+      t.className = `toast toast-${type}`;
+      t.textContent = msg;
+      wrap.appendChild(t);
+      setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity .4s'; setTimeout(()=>t.remove(), 400); }, 3500);
+    }
+
+    function switchStudentTab(tabId, itemRef) {
+      if(itemRef) {
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        itemRef.classList.add('active');
+      }
+
+      const container = document.getElementById('studentContainer');
+      if(tabId === 'dashboard') {
+        container.innerHTML = `
+          <div class="dashboard-welcome"><h2>Welcome Back, Priya 👋</h2><p>Semester 5 Final Verified Ledger is updated and locked.</p></div>
+          <div class="stat-grid">
+            <div class="stat-card"><div class="stat-icon si-green">🎓</div><div class="stat-value">8.90</div><div class="stat-label">Term SGPA Metric</div></div>
+            <div class="stat-card"><div class="stat-icon si-blue">📈</div><div class="stat-value">8.62</div><div class="stat-label">Cumulative CGPA Baseline</div></div>
+            <div class="stat-card"><div class="stat-icon si-purple">📄</div><div class="stat-value">5</div><div class="stat-label">Completed Study Semesters</div></div>
+          </div>
+          <div class="alert alert-success">🎉 Dynamic Report Card generated for review parameters. <a href="#" onclick="switchStudentTab('result')" style="font-weight:600; text-decoration:underline">Pull Up Transcripts Matrix →</a></div>
+        `;
+      } else if (tabId === 'result') {
+        container.innerHTML = `
+          <div class="result-card">
+            <div class="result-card-header">
+              <div style="display:flex; justify-content:space-between; align-items:center">
+                <div><h2>Institutional Grading Report Transcript</h2><p>Term 5 • Computer Science Engineering Division</p></div>
+                <button class="btn btn-blue" onclick="showToast('Cryptographic Payload Signoff Generated. File Compilation Initiated.','info')">⬇ Download Signed PDF</button>
+              </div>
+            </div>
+            <div class="result-meta">
+              <div class="result-meta-item"><div class="rm-val">Priya Mondal</div><div class="rm-label">Candidate Name</div></div>
+              <div class="result-meta-item"><div class="rm-val">CS2101</div><div class="rm-label">Registration ID</div></div>
+              <div class="result-meta-item"><div class="rm-val">8.90</div><div class="rm-label">SGPA</div></div>
+              <div class="result-meta-item"><div class="rm-val">PASS STATUS</div><div class="rm-label">Outcome</div></div>
+            </div>
+            <table style="width:100%">
+              <thead><tr><th>Course Code</th><th>Title Mapping</th><th>Weight Capacity</th><th>Assigned Grade</th></tr></thead>
+              <tbody>
+                <tr><td>CS501</td><td class="td-bold">Database Management Architectures</td><td>4 Units Weight</td><td><span class="badge b-green">A</span></td></tr>
+                <tr><td>CS502</td><td class="td-bold">Distributed Operating Systems</td><td>4 Units Weight</td><td><span class="badge b-blue">B+</span></td></tr>
+                <tr><td>CS503</td><td class="td-bold">Routing Network Topologies</td><td>3 Units Weight</td><td><span class="badge b-green">O</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        `;
+      } else if (tabId === 'backlogs') {
+        container.innerHTML = `
+          <div class="alert alert-success">✅ Splendid! No outstanding academic deficits or backlog metrics are mapped to this portfolio registration signature.</div>
+        `;
+      }
+    }
+
+    switchStudentTab('dashboard');
+  </script>
+</body>
+</html>

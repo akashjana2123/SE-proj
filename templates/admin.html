@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard System - TIU</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/global.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <div class="modal-bg" id="modalBg">
+    <div class="modal" id="modalBox">
+      <div class="modal-header">
+        <h3 id="modalTitle">Structural Operations Console</h3>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer" id="modalFooter"></div>
+    </div>
+  </div>
+
+  <div id="screen-app">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-row">
+          <div class="logo-icon">🎓</div>
+          <div>
+            <div class="logo-text">TIU</div>
+            <div class="logo-sub">Administration Hub</div>
+          </div>
+        </div>
+      </div>
+      <div class="sidebar-user">
+        <div class="user-role" style="color: var(--admin-c)">ADMINISTRATOR</div>
+        <div class="user-name" id="topbarAdminName">Dr. Rahul Sharma</div>
+        <div class="user-email" id="userEmailTag">admin@university.edu</div>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" id="btn-dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
+        <button class="nav-item" id="btn-faculty" onclick="switchTab('faculty')">👨‍🏫 Manage Faculty</button>
+        <button class="nav-item" id="btn-students" onclick="switchTab('students')">👨‍🎓 Manage Students</button>
+        <button class="nav-item" id="btn-subjects" onclick="switchTab('subjects')">📚 Manage Subjects</button>
+        <button class="nav-item" id="btn-generate" onclick="switchTab('generate')">⚙️ Generate Result</button>
+        <button class="nav-item" id="btn-results" onclick="switchTab('results')">📋 Manage Result</button>
+        <button class="nav-item" id="btn-password" onclick="switchTab('password')">🔑 Change Password</button>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="btn-logout" onclick="window.location.href='/'">🚪 Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="topbar">
+        <div class="topbar-title" id="pageTitle">Dashboard Engine Matrix</div>
+        <div class="topbar-right"><span class="topbar-badge badge-admin">CORE PRIVILEGES</span></div>
+      </div>
+      
+      <div class="page-body" id="panelContainer">
+        <div style="padding:40px; text-align:center; color:var(--ink3);">Connecting to database matrix telemetry pipelines...</div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function showToast(msg, type='info') {
+      const wrap = document.getElementById('toastWrap');
+      const t = document.createElement('div');
+      t.className = `toast toast-${type}`;
+      t.textContent = msg;
+      wrap.appendChild(t);
+      setTimeout(() => { t.style.opacity='0'; setTimeout(()=>t.remove(), 400); }, 3500);
+    }
+
+    function openModal(title, bodyHtml, buttons) {
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalBody').innerHTML = bodyHtml;
+      document.getElementById('modalFooter').innerHTML = buttons.map(b=>`<button class="btn ${b.cls}" onclick="${b.action}">${b.label}</button>`).join('');
+      document.getElementById('modalBg').classList.add('open');
+    }
+    function closeModal() { document.getElementById('modalBg').classList.remove('open'); }
+
+    // Dynamic Central View Routing Mechanism
+    async function switchTab(viewId) {
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      const activeBtn = document.getElementById(`btn-${viewId}`);
+      if(activeBtn) activeBtn.classList.add('active');
+
+      const container = document.getElementById('panelContainer');
+      
+      // ──────────────────────────────────────────────────
+      //  1. VIEW ENGINE: INTEGRATED DASHBOARD METRICS
+      // ──────────────────────────────────────────────────
+      if(viewId === 'dashboard') {
+        document.getElementById('pageTitle').textContent = 'Dashboard System Management';
+        container.innerHTML = `<div style='padding:20px; color:var(--ink3)'>Querying analytics engine components...</div>`;
+        
+        const res = await fetch('/api/admin/metrics');
+        const d = await res.json();
+        
+        document.getElementById('topbarAdminName').textContent = d.admin_name;
+        document.getElementById('userEmailTag').textContent = d.admin_email;
+
+        container.innerHTML = `
+          <div class="dashboard-welcome">
+            <h2>Welcome back, ${d.admin_name} 👋</h2>
+            <p>University Operational State Telemetry Monitoring Panel.</p>
+          </div>
+          <div class="stat-grid">
+            <div class="stat-card"><div class="stat-icon si-blue">👨‍🎓</div><div class="stat-value">${d.total_students}</div><div class="stat-label">Total Registered Students</div></div>
+            <div class="stat-card"><div class="stat-icon si-purple">👨‍🏫</div><div class="stat-value">${d.total_faculty}</div><div class="stat-label">Active Faculty Members</div></div>
+            <div class="stat-card"><div class="stat-icon si-amber">📚</div><div class="stat-value">${d.total_subjects}</div><div class="stat-label">Curriculum Map Courses</div></div>
+            <div class="stat-card"><div class="stat-icon si-green">✅</div><div class="stat-value">${d.published_count}</div><div class="stat-label">Transcripts Published</div></div>
+          </div>
+          <div class="stat-grid" style="margin-top: 12px;">
+            <div class="stat-card"><div class="stat-value" style="color:var(--amber-c)">${d.pending_count}</div><div class="stat-label">Pending Approval</div></div>
+            <div class="stat-card"><div class="stat-value" style="color:var(--blue-c)">${d.draft_count}</div><div class="stat-label">Saved Draft Logs</div></div>
+          </div>
+          
+          <div style="display:grid; grid-template-columns:1.2fr 0.8fr; gap:16px; margin-top:20px;">
+            <div class="card">
+              <div class="card-header">Academic Track Matrix (By Semester Status)</div>
+              <div class="card-body">
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>Stage</th><th>Published</th><th>Pending Audit</th><th>Draft Status</th><th>Incomplete Marks</th></tr></thead>
+                    <tbody>
+                      ${d.sem_matrix.map(row=>`
+                        <tr>
+                          <td><strong>Semester ${row.sem}</strong></td>
+                          <td><span class="badge b-green">${row.published}</span></td>
+                          <td><span class="badge b-amber">${row.pending}</span></td>
+                          <td><span class="badge b-blue">${row.draft}</span></td>
+                          <td><span class="badge b-red">${row.incomplete} Accounts</span></td>
+                        </tr>`).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            
+            <div class="card">
+              <div class="card-header">Activity System Audit Logs</div>
+              <div class="card-body">
+                <div style="display:flex; flex-direction:column; gap:12px">
+                  ${d.recent_activities.map(act=>`
+                  <div style="display:flex; align-items:center; gap:10px; padding-bottom:8px; border-bottom:1px solid var(--line)">
+                    <span style="font-size:16px">${act.icon}</span>
+                    <div style="flex:1">
+                      <div style="font-size:12.5px; font-weight:600">${act.desc}</div>
+                      <div style="font-size:11px; color:var(--ink3)">${act.meta} · <span style="font-family:var(--font-mono)">${act.time}</span></div>
+                    </div>
+                  </div>`).join('')}
+                </div>
+              </div>
+            </div>
+          </div>`;
+      }
+      
+      // ──────────────────────────────────────────────────
+      //  2. VIEW ENGINE: COMPLETE FACULTY CRUD PORTAL
+      // ──────────────────────────────────────────────────
+      else if(viewId === 'faculty') {
+        document.getElementById('pageTitle').textContent = 'Faculty Profiles Registry';
+        container.innerHTML = `<div style='padding:20px; color:var(--ink3)'>Loading faculty registers...</div>`;
+        const res = await fetch('/api/admin/faculty');
+        const list = await res.json();
+
+        container.innerHTML = `
+          <div class="section-header"><h3>Faculty Members Base</h3><button class="btn btn-blue" onclick="openFacultyModal()">+ Register Faculty Profile</button></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Database Reference ID</th><th>Faculty Name</th><th>Department Code</th><th>Designation Label</th><th>Status</th><th>Linked Syllabus Courses</th><th>Control Options</th></tr></thead>
+              <tbody>
+                ${list.map(f=>`
+                <tr>
+                  <td class="td-bold">FAC-${f.id.toString().padStart(3,'0')}</td>
+                  <td>${f.name}<br><small style="color:var(--ink3)">${f.email}</small></td>
+                  <td><span class="badge b-blue">${f.department}</span></td>
+                  <td>${f.designation}</td>
+                  <td><span class="badge ${f.is_active?'b-green':'b-red'}">${f.is_active?'Active':'Suspended'}</span></td>
+                  <td style="font-size:12px; color:var(--ink3)">${f.subjects.map(s=>s.name).join(', ') || 'No mapped courses'}</td>
+                  <td>
+                    <button class="btn btn-blue btn-sm" onclick="openFacultyModal(${f.id}, '${escape(JSON.stringify(f))}')">✏️ Alter</button>
+                    <button class="btn btn-ghost btn-sm" style="color:var(--red-c)" onclick="deleteFacultyEntity(${f.id})">✕ Purge</button>
+                  </td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>`;
+      }
+
+      // ──────────────────────────────────────────────────
+      //  3. VIEW ENGINE: COMPLETE STUDENT CRUD PORTAL
+      // ──────────────────────────────────────────────────
+      else if(viewId === 'students') {
+        document.getElementById('pageTitle').textContent = 'Student Core Enrollment Registers';
+        container.innerHTML = `<div style='padding:20px; color:var(--ink3)'>Gathering profile datasets...</div>`;
+        const res = await fetch('/api/admin/students');
+        const list = await res.json();
+
+        container.innerHTML = `
+          <div class="section-header"><h3>Active Enrolled Students</h3><button class="btn btn-blue" onclick="openStudentModal()">+ Enroll New Student Account</button></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Student Roll Identifier</th><th>Full Name Profile</th><th>Branch Node</th><th>Current Term Stage</th><th>Academic Batch</th><th>Record Status</th><th>Management Matrix</th></tr></thead>
+              <tbody>
+                ${list.map(s=>`
+                <tr>
+                  <td class="td-bold">${s.roll_no}</td>
+                  <td>${s.name}<br><small style="color:var(--ink3)">${s.email}</small></td>
+                  <td>${s.branch}</td>
+                  <td>Semester ${s.current_sem}</td>
+                  <td style="font-family:var(--font-mono)">${s.academic_year}</td>
+                  <td><span class="badge ${s.is_active?'b-green':'b-red'}">${s.is_active?'Active Records':'Locked'}</span></td>
+                  <td>
+                    <button class="btn btn-blue btn-sm" onclick="openStudentModal(${s.id}, '${escape(JSON.stringify(s))}')">✏️ Modify</button>
+                    <button class="btn btn-ghost btn-sm" style="color:var(--red-c)" onclick="deleteStudentEntity(${s.id})">✕ Drop</button>
+                  </td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>`;
+      }
+
+      // ──────────────────────────────────────────────────
+      //  4. VIEW ENGINE: COMPLETE SUBJECT CRUD PORTAL
+      // ──────────────────────────────────────────────────
+      else if(viewId === 'subjects') {
+        document.getElementById('pageTitle').textContent = 'University Course Catalog Blueprint';
+        container.innerHTML = `<div style='padding:20px; color:var(--ink3)'>Mapping academic catalogs...</div>`;
+        const res = await fetch('/api/admin/subjects');
+        const list = await res.json();
+
+        container.innerHTML = `
+          <div class="section-header"><h3>Curriculum Catalog Blueprints</h3><button class="btn btn-blue" onclick="openSubjectModal()">+ Add Course Mapping</button></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Course Catalog Code</th><th>Subject Heading Label</th><th>Branch Allocation</th><th>Assigned Weight Credits</th><th>Target Term Mapping</th><th>Options</th></tr></thead>
+              <tbody>
+                ${list.map(sub=>`
+                <tr>
+                  <td class="td-bold">${sub.subject_code}</td>
+                  <td><strong>${sub.subject_name}</strong></td>
+                  <td>${sub.branch}</td>
+                  <td>${sub.credits} Course Credits</td>
+                  <td>Semester ${sub.semester}</td>
+                  <td>
+                    <button class="btn btn-blue btn-sm" onclick="openSubjectModal(${sub.id}, '${escape(JSON.stringify(sub))}')">✏️ Edit</button>
+                    <button class="btn btn-ghost btn-sm" style="color:var(--red-c)" onclick="deleteSubjectEntity(${sub.id})">✕ Drop</button>
+                  </td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>`;
+      }
+
+      // ──────────────────────────────────────────────────
+      //  5. VIEW ENGINE: DYNAMIC RESULT COMPILER GENERATOR
+      // ──────────────────────────────────────────────────
+      else if(viewId === 'generate') {
+        document.getElementById('pageTitle').textContent = 'Live Compilation Processing Engine';
+        container.innerHTML = `
+          <div class="card" style="margin-bottom:20px">
+            <div class="card-header">Batch Parameter Selection Engine</div>
+            <div class="card-body">
+              <div class="field-row fr-4" style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px">
+                <div class="field"><label>Target Semester Stage</label><select id="gen_sem" onchange="loadCalculationPreview()"><option value="5">Semester 5</option><option value="1">Semester 1</option><option value="2">Semester 2</option><option value="3">Semester 3</option><option value="4">Semester 4</option><option value="6">Semester 6</option></select></div>
+                <div class="field"><label>Academic Registration Year</label><select id="gen_year" onchange="loadCalculationPreview()"><option value="2024-25">2024–25</option><option value="2025-26">2025–26</option></select></div>
+                <div class="field"><label>Branch Multi-Selection Matrix</label><select id="gen_branch" onchange="loadCalculationPreview()"><option value="ALL">Combined Branches (All)</option><option value="CSE">Computer Science (CSE)</option><option value="IT">Information Tech (IT)</option></select></div>
+                <div class="field"><label>Grading Policy System Metric</label><select id="gen_policy" onchange="loadCalculationPreview()"><option value="gpa">Standard 10-Point GPA Scale</option><option value="percentage">Normalized Percentage Scale</option></select></div>
+              </div>
+              <button class="btn btn-blue" style="margin-top:16px" onclick="commitBatchCompilation()">⚙️ Batch Execute Compile Ledger Invoices</button>
+            </div>
+          </div>
+          
+          <div class="card" style="margin-bottom:20px; border-left:4px solid var(--amber-c);">
+            <div class="card-header">System Stream Processing Notifications</div>
+            <div class="card-body" id="notificationBarContainer" style="max-height:150px; overflow-y:auto; font-size:13px; font-family:var(--font-mono); color:var(--ink2)">
+              No pending execution validation anomalies observed.
+            </div>
+          </div>
+
+          <div class="section-header">
+            <h3>Result Invoice Previews</h3>
+            <div>
+              <button class="btn btn-ghost btn-sm" onclick="exportPreviewReport('csv')">CSV Report</button>
+              <button class="btn btn-ghost btn-sm" onclick="exportPreviewReport('excel')">Excel Report</button>
+              <button class="btn btn-ghost btn-sm" onclick="exportPreviewReport('pdf')">PDF Transcript Dump</button>
+            </div>
+          </div>
+          <div class="table-wrap" id="previewTableWrapper">
+            <div style="padding:20px; text-align:center; color:var(--ink3)">Select parameters above to stream data previews.</div>
+          </div>`;
+          loadCalculationPreview();
+      }
+
+      // ──────────────────────────────────────────────────
+      //  6. VIEW ENGINE: TRANSCRIPT VERIFICATION BOARD
+      // ──────────────────────────────────────────────────
+      else if(viewId === 'results') {
+        document.getElementById('pageTitle').textContent = 'Institutional Records Audit Board';
+        container.innerHTML = `
+          <div class="card" style="margin-bottom:20px">
+            <div class="card-header">Filter Board Specifications</div>
+            <div class="card-body">
+              <div class="field-row fr-3" style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px">
+                <div class="field"><label>Semester Track</label><select id="filt_sem" onchange="fetchFilteredResults()"><option value="ALL">All Semesters</option><option value="1">Semester 1</option><option value="2">Semester 2</option><option value="3">Semester 3</option><option value="4">Semester 4</option><option value="5" selected>Semester 5</option></select></div>
+                <div class="field"><label>Evaluation Outcome</label><select id="filt_outcome" onchange="fetchFilteredResults()"><option value="ALL">All Outcomes</option><option value="PASS">PASS Metrics Only</option><option value="FAIL">FAIL Deficiencies Only</option></select></div>
+                <div class="field"><label>Ledger Status State</label><select id="filt_status" onchange="fetchFilteredResults()"><option value="ALL">All States</option><option value="DRAFT">DRAFT</option><option value="PENDING_APPROVAL">PENDING_APPROVAL</option><option value="PUBLISHED">PUBLISHED</option></select></div>
+              </div>
+              <button class="btn btn-blue" style="margin-top:16px" onclick="publishAllFilteredTranscripts()">📢 Publish All Open Filter Results</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table id="resultsBoardMainTable">
+              <thead><tr><th>Target Student Name</th><th>Roll Code</th><th>Term Track</th><th>Calculated Value</th><th>Status Evaluation</th><th>Audit Actions</th></tr></thead>
+              <tbody id="resultsBoardTableBody"></tbody>
+            </table>
+          </div>`;
+          fetchFilteredResults();
+      }
+
+      // ──────────────────────────────────────────────────
+      //  7. VIEW ENGINE: SECURITY VERIFICATION PORTAL
+      // ──────────────────────────────────────────────────
+      else if(viewId === 'password') {
+        document.getElementById('pageTitle').textContent = 'Credential Access Recovery Settings';
+        container.innerHTML = `
+          <div class="card" style="max-width:540px">
+            <div class="card-header">Target Account Credential Overrides</div>
+            <div class="card-body">
+              <div class="field" style="margin-bottom:12px">
+                <label>Target Identity Account Matrix</label>
+                <select id="pwd_target" onchange="syncPasswordRecoveryDropdowns()"><option value="student">Student Ledger Base</option><option value="faculty">Faculty Directory Base</option></select>
+              </div>
+              <div class="field" style="margin-bottom:12px" id="pwdSemFilterRow">
+                <label>Filter Search By Target Semester Stage</label>
+                <select id="pwd_sem_filter" onchange="syncPasswordRecoveryDropdowns()"><option value="ALL">All Semesters</option><option value="5" selected>Semester 5</option><option value="1">Semester 1</option></select>
+              </div>
+              <div class="field" style="margin-bottom:12px">
+                <label>Select Identified Target Account Name</label>
+                <select id="pwd_user_id"><option>Loading context profiles...</option></select>
+              </div>
+              <div class="field" style="margin-bottom:12px">
+                <label>New Passphrase String Key</label>
+                <input type="password" id="pwd_new" placeholder="Minimum 8 elements required">
+              </div>
+              <div class="field" style="margin-bottom:16px">
+                <label>Confirm Passphrase String Verification</label>
+                <input type="password" id="pwd_confirm" placeholder="Match new passphrase string">
+              </div>
+              <button class="btn btn-blue" onclick="executePasswordOverridePatch()">Commit Dynamic Credential Alteration</button>
+            </div>
+          </div>`;
+          syncPasswordRecoveryDropdowns();
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────
+    //  CRUD SUBROUTINES: FACULTY MODULES
+    // ─────────────────────────────────────────────────────────
+    async function openFacultyModal(id=null, escapedRawData=null) {
+      let f = id ? JSON.parse(unescape(escapedRawData)) : {name:'', email:'', department:'', designation:'', is_active:true, subjects:[]};
+      
+      const subRes = await fetch('/api/admin/subjects');
+      const allSubs = await subRes.json();
+
+      let formHtml = `
+        <div class="field" style="margin-bottom:8px"><label>Faculty Name String</label><input type="text" id="f_mod_name" value="${f.name}"></div>
+        <div class="field" style="margin-bottom:8px"><label>Corporate Endpoint Email</label><input type="email" id="f_mod_email" value="${f.email}"></div>
+        <div class="field" style="margin-bottom:8px"><label>Department Group</label><input type="text" id="f_mod_dept" value="${f.department}"></div>
+        <div class="field" style="margin-bottom:8px"><label>Designation Label</label><input type="text" id="f_mod_desg" value="${f.designation}"></div>
+        <div class="field" style="margin-bottom:8px">
+          <label>Profile Status Condition</label>
+          <select id="f_mod_active"><option value="1" ${f.is_active?'selected':''}>Active Account State</option><option value="0" ${!f.is_active?'selected':''}>Suspended Account State</option></select>
+        </div>
+        <div class="field"><label>Link Course Catalog Assignments (Hold Ctrl/Cmd to choose multiple)</label>
+          <select id="f_mod_subs" multiple style="height:100px">
+            ${allSubs.map(s=>`<option value="${s.id}" ${f.subjects.some(fs=>fs.id===s.id)?'selected':''}>${s.subject_code} - ${s.subject_name}</option>`).join('')}
+          </select>
+        </div>`;
+
+      openModal(id ? "Update Faculty Record" : "Register New Faculty Member", formHtml, [
+        {label: "Abort", cls:"btn-ghost", action:"closeModal()"},
+        {label: "Commit Sync", cls:"btn-blue", action:`saveFacultyFormSubmit(${id})`}
+      ]);
+    }
+
+    async function saveFacultyFormSubmit(id) {
+      const payload = {
+        name: document.getElementById('f_mod_name').value,
+        email: document.getElementById('f_mod_email').value,
+        department: document.getElementById('f_mod_dept').value,
+        designation: document.getElementById('f_mod_desg').value,
+        is_active: document.getElementById('f_mod_active').value === "1",
+        subjects: Array.from(document.getElementById('f_mod_subs').selectedOptions).map(o=>parseInt(o.value))
+      };
+      const method = id ? 'PUT' : 'POST';
+      const url = id ? `/api/admin/faculty/${id}` : '/api/admin/faculty';
+
+      const res = await fetch(url, { method: method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      const data = await res.json();
+      if(data.success) { showToast(data.message, 'success'); closeModal(); switchTab('faculty'); }
+    }
+
+    async function deleteFacultyEntity(id) {
+      if(confirm("Confirm deletion of targeted faculty ledger profile?")) {
+        const res = await fetch(`/api/admin/faculty/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if(data.success) { showToast(data.message, 'success'); switchTab('faculty'); }
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────
+    //  CRUD SUBROUTINES: STUDENT MODULES
+    // ─────────────────────────────────────────────────────────
+    function openStudentModal(id=null, escapedRawData=null) {
+      let s = id ? JSON.parse(unescape(escapedRawData)) : {name:'', email:'', roll_no:'', branch:'', current_sem:5, academic_year:'2024-25', is_active:true};
+      let formHtml = `
+        <div class="field" style="margin-bottom:8px"><label>Full Student Name Profile</label><input type="text" id="s_mod_name" value="${s.name}"></div>
+        <div class="field" style="margin-bottom:8px"><label>Primary Student Email</label><input type="email" id="s_mod_email" value="${s.email}"></div>
+        <div class="field" style="margin-bottom:8px"><label>Roll Identifier Code</label><input type="text" id="s_mod_roll" value="${s.roll_no}"></div>
+        <div class="field" style="margin-bottom:8px"><label>Branch Node</label><input type="text" id="s_mod_branch" value="${s.branch}"></div>
+        <div class="field" style="margin-bottom:8px"><label>Semester Track Level</label><input type="number" id="s_mod_sem" value="${s.current_sem}"></div>
+        <div class="field" style="margin-bottom:8px"><label>Academic Registration Batch Year</label><input type="text" id="s_mod_year" value="${s.academic_year}"></div>
+        <div class="field">
+          <label>Account Track Ledger Status</label>
+          <select id="s_mod_active"><option value="1" ${s.is_active?'selected':''}>Active Student Account</option><option value="0" ${!s.is_active?'selected':''}>Locked Student Account</option></select>
+        </div>`;
+
+      openModal(id ? "Modify Student Account Information" : "Enroll New Student Entity", formHtml, [
+        {label: "Abort", cls:"btn-ghost", action: "closeModal()"},
+        {label: "Commit Profile", cls:"btn-blue", action: `saveStudentFormSubmit(${id})`}
+      ]);
+    }
+
+    async function saveStudentFormSubmit(id) {
+      const payload = {
+        name: document.getElementById('s_mod_name').value, email: document.getElementById('s_mod_email').value,
+        roll_no: document.getElementById('s_mod_roll').value, branch: document.getElementById('s_mod_branch').value,
+        current_sem: parseInt(document.getElementById('s_mod_sem').value), academic_year: document.getElementById('s_mod_year').value,
+        is_active: document.getElementById('s_mod_active').value === "1"
+      };
+      const method = id ? 'PUT' : 'POST';
+      const url = id ? `/api/admin/students/${id}` : '/api/admin/students';
+
+      const res = await fetch(url, { method: method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      if(res.ok) { showToast("Student master record adjusted.", "success"); closeModal(); switchTab('students'); }
+    }
+
+    async function deleteStudentEntity(id) {
+      if(confirm("Confirm drop of chosen student matrix registration record?")) {
+        const res = await fetch(`/api/admin/students/${id}`, { method: 'DELETE' });
+        if(res.ok) { showToast("Student account record purged.", "success"); switchTab('students'); }
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────
+    //  CRUD SUBROUTINES: SUBJECT MODULES
+    // ─────────────────────────────────────────────────────────
+    function openSubjectModal(id=null, escapedRawData=null) {
+      let sub = id ? JSON.parse(unescape(escapedRawData)) : {subject_code:'', subject_name:'', branch:'', credits:4, semester:5};
+      let formHtml = `
+        <div class="field" style="margin-bottom:8px"><label>Course Catalog Reference Code</label><input type="text" id="sub_mod_code" value="${sub.subject_code}"></div>
+        <div class="field" style="margin-bottom:8px"><label>Subject Heading Name</label><input type="text" id="sub_mod_name" value="${sub.subject_name}"></div>
+        <div class="field" style="margin-bottom:8px"><label>Branch Allocation Node</label><input type="text" id="sub_mod_branch" value="${sub.branch}"></div>
+        <div class="field" style="margin-bottom:8px"><label>Assigned Unit Credits Weights</label><input type="number" id="sub_mod_cred" value="${sub.credits}"></div>
+        <div class="field"><label>Semester Plan Placement</label><input type="number" id="sub_mod_sem" value="${sub.semester}"></div>`;
+
+      openModal(id ? "Edit Course Parameters" : "Map New Course Schema", formHtml, [
+        {label: "Abort", cls: "btn-ghost", action:"closeModal()"},
+        {label: "Commit Course", cls: "btn-blue", action:`saveSubjectFormSubmit(${id})`}
+      ]);
+    }
+
+    async function saveSubjectFormSubmit(id) {
+      const payload = {
+        subject_code: document.getElementById('sub_mod_code').value, subject_name: document.getElementById('sub_mod_name').value,
+        branch: document.getElementById('sub_mod_branch').value, credits: parseInt(document.getElementById('sub_mod_cred').value),
+        semester: parseInt(document.getElementById('sub_mod_sem').value)
+      };
+      const method = id ? 'PUT' : 'POST';
+      const url = id ? `/api/admin/subjects/${id}` : '/api/admin/subjects';
+
+      const res = await fetch(url, { method: method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      if(res.ok) { showToast("Curriculum parameters updated.", "success"); closeModal(); switchTab('subjects'); }
+    }
+
+    async function deleteSubjectEntity(id) {
+      if(confirm("Drop subject out of standard university catalogs?")) {
+        const res = await fetch(`/api/admin/subjects/${id}`, { method: 'DELETE' });
+        if(res.ok) { showToast("Syllabus catalog dropped.", "success"); switchTab('subjects'); }
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────
+    //  ENGINE ACTIONS: GENERATE AND TRANSCRIPT PREVIEW EXPORTS
+    // ─────────────────────────────────────────────────────────
+    let currentPreviewPayloadCache = null;
+
+    async function loadCalculationPreview() {
+      const sem = document.getElementById('gen_sem').value;
+      const yr = document.getElementById('gen_year').value;
+      const br = document.getElementById('gen_branch').value;
+      const pl = document.getElementById('gen_policy').value;
+
+      const res = await fetch(`/api/admin/generate_result/preview?semester=${sem}&academic_year=${yr}&branch=${br}&grading_system=${pl}`);
+      const data = await res.json();
+      currentPreviewPayloadCache = data;
+
+      // Render streaming notification bars updates
+      const notifContainer = document.getElementById('notificationBarContainer');
+      if(data.pending_notifications.length > 0) {
+        notifContainer.innerHTML = data.pending_notifications.map(n=>`<div style="color:var(--amber-c); margin-bottom:4px;">⚠️ ${n}</div>`).join('');
+      } else {
+        notifContainer.innerHTML = `<div style="color:var(--green-c)">🟢 Matrix Verification Pass: All active accounts have completed evaluations logged. Ready to process.</div>`;
+      }
+
+      // Render evaluation outcome table mapping matrix layout elements
+      const tableWrapper = document.getElementById('previewTableWrapper');
+      if(data.generated_output.length === 0) {
+        tableWrapper.innerHTML = `<div style='padding:20px; text-align:center; color:var(--ink3)'>No active class groups tracked under selected parameters.</div>`;
+        return;
+      }
+
+      tableWrapper.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th><th>Roll Identifier</th><th>Branch</th>
+              ${data.subjects_header.map(h=>`<th>${h} Marks</th>`).join('')}
+              <th>Calculated Metric</th><th>Operational Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.generated_output.map(row=>`
+              <tr>
+                <td><strong>${row.name}</strong></td><td>${row.roll}</td><td>${row.branch}</td>
+                ${data.subjects_header.map(h=>`<td>${row.subjects_breakdown[h] ?? '--'}</td>`).join('')}
+                <td style="font-family:var(--font-mono); font-weight:600">${row.score}</td>
+                <td><span class="badge ${row.status==='READY'?'b-green':'b-amber'}">${row.status}</span></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    async function commitBatchCompilation() {
+      const payload = {
+        semester: document.getElementById('gen_sem').value,
+        academic_year: document.getElementById('gen_year').value,
+        branch: document.getElementById('gen_branch').value,
+        grading_system: document.getElementById('gen_policy').value
+      };
+      
+      const res = await fetch('/api/admin/generate_result/commit', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      const data = await res.json();
+      if(data.success) { showToast(data.message, 'success'); switchTab('results'); }
+    }
+
+    // Client-side report exports processor (CSV, Excel, PDF architectures)
+    function exportPreviewReport(format) {
+      if(!currentPreviewPayloadCache || currentPreviewPayloadCache.generated_output.length === 0) {
+        showToast("No compilations cached to build data reports.", "error"); return;
+      }
+      const headers = ["Name", "Roll", "Branch", ...currentPreviewPayloadCache.subjects_header, "Calculated Result", "Status"];
+      const rows = currentPreviewPayloadCache.generated_output.map(r=>[
+        r.name, r.roll, r.branch, ...currentPreviewPayloadCache.subjects_header.map(h=>r.subjects_breakdown[h] ?? '--'), r.score, r.status
+      ]);
+
+      if(format === 'csv') {
+        let content = [headers.join(','), ...rows.map(r=>r.join(','))].join('\n');
+        let blob = new Blob([content], {type: 'text/csv;charset=utf-8;'});
+        let link = document.createElement("a"); link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", `Transcript_Matrix_Export.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link);
+      } else if(format === 'excel') {
+        let ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+        let wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Transcripts");
+        XLSX.writeFile(wb, "Transcript_Matrix_Compilation.xlsx");
+      } else if(format === 'pdf') {
+        const { jsPDF } = window.jspdf; let doc = new jsPDF();
+        doc.setFont("Helvetica", "bold"); doc.text("Institutional Transcript Base Matrix Dump", 14, 16);
+        doc.setFont("Helvetica", "normal"); doc.setFontSize(10);
+        let y = 26;
+        rows.forEach(r => {
+          doc.text(`${r[1]} - ${r[0]} | Result: ${r[r.length-2]} (${r[r.length-1]})`, 14, y); y += 8;
+          if(y > 280) { doc.addPage(); y = 20; }
+        });
+        doc.save("Transcript_Matrix_Dump.pdf");
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────
+    //  ENGINE ACTIONS: TRANSCRIPT AUDIT BOARD & FILTERS
+    // ─────────────────────────────────────────────────────────
+    async function fetchFilteredResults() {
+      const sem = document.getElementById('filt_sem').value;
+      const outcome = document.getElementById('filt_outcome').value;
+      const status = document.getElementById('filt_status').value;
+
+      const res = await fetch(`/api/admin/results/fetch?semester=${sem}&pass_fail=${outcome}&status=${status}`);
+      const list = await res.json();
+      
+      const tbody = document.getElementById('resultsBoardTableBody');
+      if(list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--ink3);">No metrics meet current query specifications.</td></tr>`; return;
+      }
+
+      tbody.innerHTML = list.map(r=>`
+        <tr>
+          <td class="td-bold">${r.name}</td>
+          <td>${r.roll}</td>
+          <td>Semester ${r.semester}</td>
+          <td style="font-family:var(--font-mono)"><strong>${r.sgpa}</strong></td>
+          <td>
+            <span class="badge ${r.overall_status==='PASS'?'b-green':'b-red'}" style="margin-right:4px">${r.overall_status}</span>
+            <span class="badge ${r.status==='PUBLISHED'?'b-green': r.status==='DRAFT'?'b-blue':'b-amber'}">${r.status}</span>
+          </td>
+          <td>
+            ${r.status !== 'PUBLISHED' ? `<button class="btn btn-blue btn-sm" onclick="publishSingleResultCard(${r.id})">📢 Audit & Publish</button>` : `<span style="font-size:12px; color:var(--ink3)">Complete</span>`}
+          </td>
+        </tr>`).join('');
+    }
+
+    async function publishSingleResultCard(id) {
+      const res = await fetch(`/api/admin/results/publish_single/${id}`, { method: 'POST' });
+      if(res.ok) { showToast("Transcript published to live portal views.", "success"); fetchFilteredResults(); }
+    }
+
+    async function publishAllFilteredTranscripts() {
+      if(confirm("Commit action to publish all compiled transcripts across current tracking views?")) {
+        const res = await fetch('/api/admin/results/publish_all', { method: 'POST' });
+        if(res.ok) { showToast("All unreleased entries published successfully.", "success"); fetchFilteredResults(); }
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────
+    //  ENGINE ACTIONS: RECOVERY ACCESS DROPDOWN MANAGERS
+    // ─────────────────────────────────────────────────────────
+    async function syncPasswordRecoveryDropdowns() {
+      const target = document.getElementById('pwd_target').value;
+      const semRow = document.getElementById('pwdSemFilterRow');
+      let url = `/api/admin/get_users_by_filter?target=${target}`;
+      
+      if(target === 'student') {
+        semRow.style.display = 'block';
+        url += `&semester=${document.getElementById('pwd_sem_filter').value}`;
+      } else {
+        semRow.style.display = 'none';
+      }
+
+      const res = await fetch(url);
+      const list = await res.json();
+      const userSelect = document.getElementById('pwd_user_id');
+
+      if(list.length === 0) {
+        userSelect.innerHTML = `<option value="">No matching user entities found</option>`; return;
+      }
+      userSelect.innerHTML = list.map(u=>`<option value="${u.id}">${u.name} (${u.meta})</option>`).join('');
+    }
+
+    async function executePasswordOverridePatch() {
+      const payload = {
+        target: document.getElementById('pwd_target').value,
+        target_id: document.getElementById('pwd_user_id').value,
+        new_password: document.getElementById('pwd_new').value
+      };
+      const confirmStr = document.getElementById('pwd_confirm').value;
+
+      if(payload.new_password !== confirmStr) { showToast("Passphrase strings mismatch validation inputs.", "error"); return; }
+
+      const res = await fetch('/api/admin/change_password_execute', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      const data = await res.json();
+      if(data.success) {
+        showToast(data.message, 'success');
+        document.getElementById('pwd_new').value = ''; document.getElementById('pwd_confirm').value = '';
+      } else {
+        showToast(data.message, 'error');
+      }
+    }
+
+    // Initialize Active Layout State on Application Boot Run
+    switchTab('dashboard');
+  </script>
+</body>
+</html>

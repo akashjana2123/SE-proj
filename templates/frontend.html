@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TIU – Student Result Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ───────────────────────────────────────────────
+   ROOT & RESET
+──────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink:       #0f1117;
+  --ink2:      #3a3d4a;
+  --ink3:      #7a7d8a;
+  --paper:     #f8f6f1;
+  --white:     #ffffff;
+  --cream:     #faf9f6;
+  --line:      #e5e2da;
+  --accent:    #2563eb;
+  --accent2:   #1d4ed8;
+  --success:   #16a34a;
+  --warning:   #d97706;
+  --danger:    #dc2626;
+  --admin-c:   #7c3aed;
+  --faculty-c: #0891b2;
+  --student-c: #059669;
+  --r: 10px;
+  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,.12);
+  --font-serif: 'DM Serif Display', Georgia, serif;
+  --font-body: 'Outfit', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* ───────────────────────────────────────────────
+   SCREENS
+──────────────────────────────────────────────── */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: flex; flex-direction: column; }
+#screen-login.active { flex-direction: row; align-items: center; justify-content: center; background: #fff; }
+
+/* ───────────────────────────────────────────────
+   LOGIN SCREEN
+──────────────────────────────────────────────── */
+#screen-login {
+  background: #ffffff;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: stretch;
+  min-height: 100vh;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Left decorative panel */
+.login-panel-left {
+  flex: 1;
+  background: var(--accent);
+  background: linear-gradient(145deg, #1e40af 0%, #2563eb 50%, #3b82f6 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 56px 52px;
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+}
+.login-panel-left::before {
+  content: '';
+  position: absolute;
+  width: 420px; height: 420px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.07);
+  top: -120px; right: -120px;
+}
+.login-panel-left::after {
+  content: '';
+  position: absolute;
+  width: 280px; height: 280px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.05);
+  bottom: 80px; right: 40px;
+}
+.lpl-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.55);
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.15);
+  padding: 5px 12px;
+  border-radius: 20px;
+  margin-bottom: 28px;
+  display: inline-block;
+}
+.lpl-heading {
+  font-family: var(--font-serif);
+  font-size: 40px;
+  line-height: 1.15;
+  color: #fff;
+  letter-spacing: -.02em;
+  margin-bottom: 16px;
+  max-width: 340px;
+}
+.lpl-sub {
+  font-size: 14px;
+  color: rgba(255,255,255,.6);
+  line-height: 1.7;
+  max-width: 320px;
+  margin-bottom: 36px;
+}
+.lpl-features {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.lpl-feat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: rgba(255,255,255,.75);
+}
+.lpl-feat-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.5);
+  flex-shrink: 0;
+}
+
+/* Right form panel */
+.login-panel-right {
+  width: 460px;
+  flex-shrink: 0;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 48px;
+  border-left: 1px solid var(--line);
+  position: relative;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 360px;
+}
+
+.login-logo {
+  margin-bottom: 32px;
+}
+.login-logo .logo-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px; height: 48px;
+  background: var(--accent);
+  border-radius: 12px;
+  font-size: 22px;
+  margin-bottom: 14px;
+  box-shadow: 0 4px 14px rgba(37,99,235,.3);
+}
+.login-logo h1 {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  color: var(--ink);
+  letter-spacing: -.02em;
+  margin-bottom: 4px;
+}
+.login-logo p {
+  font-size: 13px;
+  color: var(--ink3);
+  font-family: var(--font-mono);
+  letter-spacing: .03em;
+}
+
+.role-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 5px;
+  margin-bottom: 24px;
+  background: var(--cream);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 4px;
+}
+.role-tab {
+  padding: 8px 6px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--ink3);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .2s;
+  text-align: center;
+}
+.role-tab.active {
+  background: var(--white);
+  color: var(--accent);
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  font-weight: 600;
+}
+.role-tab:hover:not(.active) { color: var(--ink2); background: rgba(0,0,0,.03); }
+
+.form-group { margin-bottom: 16px; }
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+}
+.form-group input {
+  width: 100%;
+  background: var(--white);
+  border: 1.5px solid var(--line);
+  border-radius: 9px;
+  padding: 11px 14px;
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  color: var(--ink);
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+.form-group input::placeholder { color: #c4c4c4; }
+.form-group input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 12px;
+  background: var(--accent);
+  border: none;
+  border-radius: 9px;
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  box-shadow: 0 2px 10px rgba(37,99,235,.3);
+  margin-top: 4px;
+}
+.btn-primary:hover { background: var(--accent2); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(37,99,235,.4); }
+.btn-primary:active { transform: none; }
+
+.login-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--danger);
+  font-size: 13px;
+  margin-bottom: 14px;
+  display: none;
+}
+
+/* Hide left panel on small screens */
+@media (max-width: 720px) {
+  .login-panel-left { display: none; }
+  .login-panel-right { width: 100%; border-left: none; }
+}
+
+/* ───────────────────────────────────────────────
+   APP SHELL
+──────────────────────────────────────────────── */
+#screen-app {
+  flex-direction: row;
+  min-height: 100vh;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--ink);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.sidebar-logo {
+  padding: 22px 22px 18px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.sidebar-logo .logo-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sidebar-logo .logo-icon {
+  width: 34px; height: 34px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.sidebar-logo .logo-text {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  color: #fff;
+  letter-spacing: -.01em;
+}
+.sidebar-logo .logo-sub {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: rgba(255,255,255,.3);
+  letter-spacing: .06em;
+  margin-top: 2px;
+  text-transform: uppercase;
+}
+
+.sidebar-user {
+  padding: 14px 18px;
+  margin: 12px;
+  background: rgba(255,255,255,.04);
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.07);
+}
+.sidebar-user .user-role {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.sidebar-user .user-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #fff;
+}
+.sidebar-user .user-email {
+  font-size: 11.5px;
+  color: rgba(255,255,255,.35);
+  font-family: var(--font-mono);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-nav { flex: 1; padding: 8px 10px; }
+.nav-section-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.25);
+  padding: 12px 10px 6px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  color: rgba(255,255,255,.55);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+  margin-bottom: 1px;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+.nav-item:hover { background: rgba(255,255,255,.06); color: rgba(255,255,255,.85); }
+.nav-item.active { background: var(--accent); color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,.3); }
+.nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+
+.sidebar-footer {
+  padding: 12px 10px;
+  border-top: 1px solid rgba(255,255,255,.07);
+}
+.btn-logout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  color: rgba(255,255,255,.45);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+  border: none;
+  background: transparent;
+  width: 100%;
+}
+.btn-logout:hover { background: rgba(220,38,38,.12); color: #fca5a5; }
+
+/* MAIN CONTENT */
+.main-content {
+  flex: 1;
+  margin-left: 240px;
+  background: var(--paper);
+  min-height: 100vh;
+}
+
+.topbar {
+  background: var(--white);
+  border-bottom: 1px solid var(--line);
+  padding: 0 32px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.topbar-title {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  color: var(--ink);
+  letter-spacing: -.02em;
+}
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.topbar-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 500;
+  letter-spacing: .04em;
+}
+.badge-admin   { background: rgba(124,58,237,.1); color: var(--admin-c); }
+.badge-faculty { background: rgba(8,145,178,.1);  color: var(--faculty-c); }
+.badge-student { background: rgba(5,150,105,.1);  color: var(--student-c); }
+
+.page-body { padding: 28px 32px; }
+
+/* ───────────────────────────────────────────────
+   DASHBOARD CARDS
+──────────────────────────────────────────────── */
+.dashboard-welcome {
+  margin-bottom: 28px;
+}
+.dashboard-welcome h2 {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  letter-spacing: -.02em;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.dashboard-welcome p { color: var(--ink3); font-size: 14px; }
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.stat-card {
+  background: var(--white);
+  border-radius: var(--r);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.stat-card .stat-icon {
+  width: 38px; height: 38px;
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+.stat-card .stat-value {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1;
+}
+.stat-card .stat-label {
+  font-size: 12.5px;
+  color: var(--ink3);
+  font-weight: 500;
+}
+.si-blue   { background: rgba(37,99,235,.1);  color: var(--accent); }
+.si-green  { background: rgba(22,163,74,.1);  color: var(--success); }
+.si-purple { background: rgba(124,58,237,.1); color: var(--admin-c); }
+.si-amber  { background: rgba(217,119,6,.1);  color: var(--warning); }
+.si-teal   { background: rgba(8,145,178,.1);  color: var(--faculty-c); }
+
+/* ───────────────────────────────────────────────
+   PANELS / PAGES
+──────────────────────────────────────────────── */
+.panel { display: none; }
+.panel.active { display: block; }
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.section-header h3 {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  letter-spacing: -.02em;
+}
+
+/* Table */
+.table-wrap {
+  background: var(--white);
+  border-radius: var(--r);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+thead { background: var(--ink); }
+thead th {
+  padding: 12px 16px;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.6);
+}
+tbody tr { border-bottom: 1px solid var(--line); transition: background .1s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--cream); }
+tbody td {
+  padding: 12px 16px;
+  font-size: 13.5px;
+  color: var(--ink2);
+}
+.td-bold { font-weight: 600; color: var(--ink); }
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .04em;
+}
+.b-green   { background: rgba(22,163,74,.1);  color: var(--success); }
+.b-amber   { background: rgba(217,119,6,.1);  color: var(--warning); }
+.b-blue    { background: rgba(37,99,235,.1);  color: var(--accent);  }
+.b-red     { background: rgba(220,38,38,.1);  color: var(--danger);  }
+.b-purple  { background: rgba(124,58,237,.1); color: var(--admin-c); }
+.b-gray    { background: rgba(0,0,0,.06);     color: var(--ink3);    }
+
+/* Buttons */
+.btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all .15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-blue   { background: var(--accent); color: #fff; }
+.btn-blue:hover { background: var(--accent2); }
+.btn-green  { background: var(--success); color: #fff; }
+.btn-green:hover { background: #15803d; }
+.btn-red    { background: var(--danger); color: #fff; }
+.btn-red:hover { background: #b91c1c; }
+.btn-ghost  { background: transparent; color: var(--ink2); border: 1.5px solid var(--line); }
+.btn-ghost:hover { background: var(--cream); }
+.btn-sm { padding: 5px 11px; font-size: 12px; }
+
+/* Cards */
+.card {
+  background: var(--white);
+  border-radius: var(--r);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-body { padding: 20px; }
+
+/* Form elements */
+.field-row { display: grid; gap: 14px; margin-bottom: 14px; }
+.fr-2 { grid-template-columns: 1fr 1fr; }
+.fr-3 { grid-template-columns: 1fr 1fr 1fr; }
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--ink3);
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+}
+.field input, .field select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--white);
+  outline: none;
+  transition: border-color .15s;
+}
+.field input:focus, .field select:focus { border-color: var(--accent); }
+
+/* Marks input table */
+.marks-table td input {
+  width: 80px;
+  padding: 6px 8px;
+  border: 1.5px solid var(--line);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  text-align: center;
+  outline: none;
+}
+.marks-table td input:focus { border-color: var(--accent); }
+
+/* Result Card */
+.result-card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  max-width: 720px;
+}
+.result-card-header {
+  background: var(--ink);
+  padding: 28px 32px;
+  color: #fff;
+}
+.result-card-header h2 {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  letter-spacing: -.02em;
+  margin-bottom: 2px;
+}
+.result-card-header p { color: rgba(255,255,255,.5); font-size: 13px; font-family: var(--font-mono); }
+
+.result-meta {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--line);
+  background: var(--cream);
+}
+.result-meta-item { text-align: center; padding: 8px 0; }
+.result-meta-item .rm-val {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.result-meta-item .rm-label {
+  font-size: 11px;
+  color: var(--ink3);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  font-family: var(--font-mono);
+  margin-top: 3px;
+}
+
+/* SGPA display */
+.sgpa-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  padding: 24px 32px;
+  border-bottom: 1px solid var(--line);
+}
+.gpa-circle {
+  width: 88px; height: 88px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid var(--accent);
+  background: rgba(37,99,235,.05);
+}
+.gpa-circle .gpa-val {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--accent);
+  line-height: 1;
+}
+.gpa-circle .gpa-label {
+  font-size: 10px;
+  color: var(--ink3);
+  letter-spacing: .06em;
+  margin-top: 3px;
+}
+.status-pill {
+  padding: 8px 22px;
+  border-radius: 30px;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: .04em;
+}
+.sp-pass { background: rgba(22,163,74,.12); color: var(--success); }
+.sp-fail { background: rgba(220,38,38,.12); color: var(--danger); }
+
+/* Alert */
+.alert {
+  padding: 12px 16px;
+  border-radius: 9px;
+  font-size: 13.5px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.alert-info    { background: rgba(37,99,235,.08); border-left: 3px solid var(--accent); color: var(--accent2); }
+.alert-success { background: rgba(22,163,74,.08); border-left: 3px solid var(--success); color: #15803d; }
+.alert-warning { background: rgba(217,119,6,.08); border-left: 3px solid var(--warning); color: var(--warning); }
+
+/* Step indicator */
+.steps {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 24px;
+}
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink3);
+}
+.step-num {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+}
+.step.done .step-num { background: var(--success); border-color: var(--success); color: #fff; }
+.step.active .step-num { background: var(--accent); border-color: var(--accent); color: #fff; }
+.step.active { color: var(--ink); }
+.step-line { flex: 1; height: 2px; background: var(--line); margin: 0 8px; min-width: 20px; }
+.step-line.done { background: var(--success); }
+
+/* Change password */
+.pwd-strength { margin-top: 6px; height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.pwd-strength-bar { height: 100%; border-radius: 2px; transition: width .3s, background .3s; }
+
+/* Toast */
+.toast-wrap {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.toast {
+  background: var(--ink);
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.25);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideUp .3s ease;
+  max-width: 320px;
+}
+.toast-success { border-left: 3px solid var(--success); }
+.toast-error   { border-left: 3px solid var(--danger); }
+.toast-info    { border-left: 3px solid var(--accent); }
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Modal */
+.modal-bg {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.5);
+  backdrop-filter: blur(4px);
+  z-index: 500;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-bg.open { display: flex; }
+.modal {
+  background: var(--white);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 24px 80px rgba(0,0,0,.25);
+  overflow: hidden;
+}
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-header h3 { font-weight: 700; font-size: 16px; }
+.modal-close {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: var(--cream);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink3);
+}
+.modal-close:hover { background: var(--line); }
+.modal-body { padding: 22px 24px; }
+.modal-footer { padding: 16px 24px; border-top: 1px solid var(--line); display: flex; gap: 10px; justify-content: flex-end; }
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--ink3);
+}
+.empty-state .es-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; }
+
+/* Workflow status */
+.workflow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 18px 0;
+}
+.wf-step {
+  flex: 1;
+  text-align: center;
+  position: relative;
+}
+.wf-dot {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 6px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.wf-dot.done    { background: var(--success); color: #fff; }
+.wf-dot.current { background: var(--accent); color: #fff; box-shadow: 0 0 0 4px rgba(37,99,235,.2); }
+.wf-dot.pending { background: var(--line); color: var(--ink3); }
+.wf-label { font-size: 11px; color: var(--ink3); font-family: var(--font-mono); }
+.wf-line {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--line);
+  z-index: -1;
+}
+.wf-line.done { background: var(--success); }
+</style>
+</head>
+<body>
+
+<!-- Toast container -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- Modal -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal" id="modalBox">
+    <div class="modal-header">
+      <h3 id="modalTitle">Modal</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     LOGIN SCREEN
+═══════════════════════════════════════════════ -->
+<div id="screen-login" class="screen active">
+
+  <div class="login-panel-right" style="border-left:none;margin:auto">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="logo-mark">🎓</div>
+        <h1>Welcome back</h1>
+        <p>Sign in to your TIU account</p>
+      </div>
+
+      <div class="role-tabs">
+        <button class="role-tab active" onclick="setRole('admin', this)">Admin</button>
+        <button class="role-tab" onclick="setRole('faculty', this)">Faculty</button>
+        <button class="role-tab" onclick="setRole('student', this)">Student</button>
+      </div>
+
+      <div class="login-error" id="loginError">Invalid credentials. Please try again.</div>
+
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="loginEmail" placeholder="Enter your email" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPwd" placeholder="Enter your password">
+      </div>
+      <button class="btn-primary" onclick="doLogin()">Sign In →</button>
+
+      <p style="text-align:center;margin-top:18px;font-size:11.5px;color:var(--ink3);font-family:var(--font-mono)">
+        Demo: any email · password <strong style="color:var(--ink2)">"demo123"</strong>
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     APP SCREEN
+═══════════════════════════════════════════════ -->
+<div id="screen-app" class="screen">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-row">
+        <div class="logo-icon">🎓</div>
+        <div>
+          <div class="logo-text">TIU</div>
+          <div class="logo-sub">Result Portal</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-user">
+      <div class="user-role" id="sideRole" style="color: var(--accent)">ADMIN</div>
+      <div class="user-name" id="sideName">Dr. Rahul Sharma</div>
+      <div class="user-email" id="sideEmail">admin@university.edu</div>
+    </div>
+
+    <nav class="sidebar-nav" id="sideNav"></nav>
+
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="doLogout()">
+        <span>🚪</span> Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-title" id="topTitle">Dashboard</div>
+      <div class="topbar-right">
+        <span class="topbar-badge" id="topBadge">ADMIN</span>
+      </div>
+    </div>
+    <div class="page-body" id="pageBody"></div>
+  </div>
+
+</div>
+
+<script>
+/* ─────────────────────────────────────────────
+   STATE
+───────────────────────────────────────────── */
+let currentRole = 'admin';
+let currentUser = {};
+let currentPanel = '';
+
+const USERS = {
+  admin:   { name: 'Dr. Rahul Sharma',   email: 'admin@university.edu',   role: 'admin' },
+  faculty: { name: 'Prof. Anita Mishra', email: 'faculty@university.edu', role: 'faculty' },
+  student: { name: 'Priya Mondal',       email: 'priya@university.edu',   role: 'student' },
+};
+
+/* Demo data */
+const STUDENTS = [
+  { id:'S001', name:'Priya Mondal',    roll:'CS2101', branch:'CSE', sem:5 },
+  { id:'S002', name:'Arjun Das',       roll:'CS2102', branch:'CSE', sem:5 },
+  { id:'S003', name:'Sneha Roy',       roll:'CS2103', branch:'CSE', sem:5 },
+  { id:'S004', name:'Rahul Dey',       roll:'CS2104', branch:'IT',  sem:5 },
+  { id:'S005', name:'Meena Ghosh',     roll:'CS2105', branch:'IT',  sem:5 },
+];
+const FACULTY_LIST = [
+  { id:'F001', name:'Prof. Anita Mishra', dept:'CSE', subjects:['Database Systems','OS'] },
+  { id:'F002', name:'Dr. Sanjay Bose',    dept:'IT',  subjects:['Networks','Algorithms'] },
+  { id:'F003', name:'Ms. Puja Banerjee',  dept:'CSE', subjects:['Web Tech'] },
+];
+const SUBJECTS = [
+  { id:'SU01', code:'CS501', name:'Database Systems',    credits:4, sem:5 },
+  { id:'SU02', code:'CS502', name:'Operating Systems',   credits:4, sem:5 },
+  { id:'SU03', code:'CS503', name:'Computer Networks',   credits:3, sem:5 },
+  { id:'SU04', code:'CS504', name:'Algorithms',          credits:4, sem:5 },
+  { id:'SU05', code:'CS505', name:'Web Technology',      credits:3, sem:5 },
+];
+const MARKS_DATA = {
+  S001: { SU01:82, SU02:78, SU03:91, SU04:85, SU05:88 },
+  S002: { SU01:74, SU02:65, SU03:70, SU04:55, SU05:72 },
+  S003: { SU01:91, SU02:88, SU03:94, SU04:90, SU05:95 },
+  S004: { SU01:60, SU02:58, SU03:null, SU04:null, SU05:63 },
+  S005: { SU01:45, SU02:40, SU03:52, SU04:38, SU05:48 },
+};
+const RESULTS = [
+  { id:'R001', studentId:'S001', name:'Priya Mondal',    roll:'CS2101', sgpa:8.9, cgpa:8.6, status:'PUBLISHED', sem:5 },
+  { id:'R002', studentId:'S002', name:'Arjun Das',       roll:'CS2102', sgpa:7.2, cgpa:7.0, status:'PUBLISHED', sem:5 },
+  { id:'R003', studentId:'S003', name:'Sneha Roy',       roll:'CS2103', sgpa:9.4, cgpa:9.1, status:'PUBLISHED', sem:5 },
+  { id:'R004', studentId:'S004', name:'Rahul Dey',       roll:'CS2104', sgpa:null, cgpa:null, status:'DRAFT',   sem:5 },
+  { id:'R005', studentId:'S005', name:'Meena Ghosh',     roll:'CS2105', sgpa:4.8, cgpa:5.2, status:'PENDING',  sem:5 },
+];
+const BACKLOGS = [
+  { id:'B001', studentId:'S004', student:'Rahul Dey',   roll:'CS2104', subject:'CS503 – Computer Networks',    year:'2024-25', status:'ACTIVE' },
+  { id:'B002', studentId:'S004', student:'Rahul Dey',   roll:'CS2104', subject:'CS504 – Algorithms',           year:'2024-25', status:'ACTIVE' },
+  { id:'B003', studentId:'S005', student:'Meena Ghosh', roll:'CS2105', subject:'CS504 – Algorithms',           year:'2024-25', status:'ACTIVE' },
+];
+
+/* ─────────────────────────────────────────────
+   NAVIGATION CONFIGS
+───────────────────────────────────────────── */
+const NAV = {
+  admin: [
+    { id:'dashboard',  icon:'📊', label:'Dashboard' },
+    { id:'manage-faculty', icon:'👨‍🏫', label:'Manage Faculty' },
+    { id:'manage-students', icon:'👨‍🎓', label:'Manage Students' },
+    { id:'manage-subjects', icon:'📚', label:'Manage Subjects' },
+    { id:'generate-result', icon:'⚙️', label:'Generate Result' },
+    { id:'manage-result', icon:'📋', label:'Manage Result' },
+    { id:'change-password', icon:'🔑', label:'Change Password' },
+  ],
+  faculty: [
+    { id:'dashboard',    icon:'📊', label:'Dashboard' },
+    { id:'enter-marks',  icon:'✏️', label:'Enter / Update Marks' },
+    { id:'backlogs',     icon:'⚠️', label:'Student Backlogs' },
+    { id:'manage-result-faculty', icon:'📋', label:'Manage Result' },
+    { id:'change-password', icon:'🔑', label:'Change Password' },
+  ],
+  student: [
+    { id:'dashboard',      icon:'📊', label:'Dashboard' },
+    { id:'view-result',    icon:'📄', label:'View Result' },
+    { id:'view-backlogs',  icon:'⚠️', label:'View Backlogs' },
+    { id:'change-password',icon:'🔑', label:'Change Password' },
+  ],
+};
+
+/* ─────────────────────────────────────────────
+   AUTH
+───────────────────────────────────────────── */
+function setRole(role, btn) {
+  currentRole = role;
+  document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+function doLogin() {
+  const pwd = document.getElementById('loginPwd').value;
+  const email = document.getElementById('loginEmail').value;
+  const err = document.getElementById('loginError');
+  if (!email || pwd !== 'demo123') { err.style.display = 'flex'; return; }
+  err.style.display = 'none';
+  currentUser = USERS[currentRole];
+  currentUser.email = email;
+  showApp();
+}
+function doLogout() {
+  document.getElementById('screen-app').classList.remove('active');
+  document.getElementById('screen-login').classList.add('active');
+  document.getElementById('loginPwd').value = '';
+  document.getElementById('loginEmail').value = '';
+}
+
+/* ─────────────────────────────────────────────
+   SHOW APP
+───────────────────────────────────────────── */
+function showApp() {
+  document.getElementById('screen-login').classList.remove('active');
+  document.getElementById('screen-app').classList.add('active');
+
+  // Sidebar user info
+  const roleColors = { admin: 'var(--admin-c)', faculty: 'var(--faculty-c)', student: 'var(--student-c)' };
+  document.getElementById('sideRole').textContent = currentRole.toUpperCase();
+  document.getElementById('sideRole').style.color = roleColors[currentRole];
+  document.getElementById('sideName').textContent = currentUser.name;
+  document.getElementById('sideEmail').textContent = currentUser.email;
+
+  // Badge
+  const badgeClass = { admin:'badge-admin', faculty:'badge-faculty', student:'badge-student' };
+  const topBadge = document.getElementById('topBadge');
+  topBadge.textContent = currentRole.toUpperCase();
+  topBadge.className = `topbar-badge ${badgeClass[currentRole]}`;
+
+  // Build nav
+  buildNav();
+  navigate('dashboard');
+}
+
+function buildNav() {
+  const nav = document.getElementById('sideNav');
+  nav.innerHTML = '';
+  NAV[currentRole].forEach(item => {
+    const btn = document.createElement('button');
+    btn.className = 'nav-item';
+    btn.id = 'nav-' + item.id;
+    btn.innerHTML = `<span class="nav-icon">${item.icon}</span> ${item.label}`;
+    btn.onclick = () => navigate(item.id);
+    nav.appendChild(btn);
+  });
+}
+
+function navigate(panelId) {
+  currentPanel = panelId;
+  // Update nav
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const active = document.getElementById('nav-' + panelId);
+  if (active) active.classList.add('active');
+  // Render
+  const titles = {
+    'dashboard':'Dashboard','manage-faculty':'Manage Faculty','manage-students':'Manage Students',
+    'manage-subjects':'Manage Subjects','generate-result':'Generate Result','manage-result':'Manage Result',
+    'manage-result-faculty':'Manage Result','enter-marks':'Enter / Update Marks','backlogs':'Student Backlogs',
+    'view-result':'My Result','view-backlogs':'My Backlogs','change-password':'Change Password',
+  };
+  document.getElementById('topTitle').textContent = titles[panelId] || panelId;
+  const body = document.getElementById('pageBody');
+  body.innerHTML = '';
+  const renders = {
+    dashboard: renderDashboard,
+    'manage-faculty': renderManageFaculty,
+    'manage-students': renderManageStudents,
+    'manage-subjects': renderManageSubjects,
+    'generate-result': renderGenerateResult,
+    'manage-result': renderManageResult,
+    'manage-result-faculty': renderManageResultFaculty,
+    'enter-marks': renderEnterMarks,
+    'backlogs': renderBacklogs,
+    'view-result': renderViewResult,
+    'view-backlogs': renderViewBacklogs,
+    'change-password': renderChangePassword,
+  };
+  if (renders[panelId]) renders[panelId](body);
+}
+
+/* ─────────────────────────────────────────────
+   DASHBOARD
+───────────────────────────────────────────── */
+function renderDashboard(body) {
+  if (currentRole === 'admin') {
+    body.innerHTML = `
+    <div class="dashboard-welcome">
+      <h2>Good morning, Dr. Sharma 👋</h2>
+      <p>Here's an overview of the system for Semester 5 – 2024–25</p>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-icon si-blue">👨‍🎓</div>
+        <div class="stat-value">1,248</div>
+        <div class="stat-label">Total Students</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon si-purple">👨‍🏫</div>
+        <div class="stat-value">64</div>
+        <div class="stat-label">Faculty Members</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon si-amber">📚</div>
+        <div class="stat-value">28</div>
+        <div class="stat-label">Active Subjects</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon si-green">✅</div>
+        <div class="stat-value">1,190</div>
+        <div class="stat-label">Results Published</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon si-teal">⏳</div>
+        <div class="stat-value">58</div>
+        <div class="stat-label">Pending Results</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="card">
+        <div class="card-header">Result Status – Sem 5</div>
+        <div class="card-body">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            ${[['Published','1190','b-green'],['Pending Approval','42','b-amber'],['Draft','58','b-blue'],['Marks Incomplete','16','b-red']].map(([l,v,c])=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">
+              <span style="font-size:13.5px">${l}</span>
+              <span class="badge ${c}">${v}</span>
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">Recent Activity</div>
+        <div class="card-body">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            ${[
+              ['Prof. Anita submitted marks','CS501','2 hours ago','🟢'],
+              ['Result generated for Sem 5','Admin','4 hours ago','⚙️'],
+              ['New student added','S1306','Yesterday','👤'],
+              ['Password reset','Prof. Bose','Yesterday','🔑'],
+              ['Backlog updated','CS2104','2 days ago','⚠️'],
+            ].map(([a,b,c,d])=>`
+            <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)">
+              <span style="font-size:16px">${d}</span>
+              <div style="flex:1"><div style="font-size:13px;font-weight:500">${a}</div><div style="font-size:11.5px;color:var(--ink3);font-family:var(--font-mono)">${b} · ${c}</div></div>
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  } else if (currentRole === 'faculty') {
+    body.innerHTML = `
+    <div class="dashboard-welcome">
+      <h2>Hello, Prof. Mishra 👋</h2>
+      <p>Manage marks and results for your assigned subjects.</p>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-icon si-blue">📚</div><div class="stat-value">3</div><div class="stat-label">Assigned Subjects</div></div>
+      <div class="stat-card"><div class="stat-icon si-green">✅</div><div class="stat-value">248</div><div class="stat-label">Marks Submitted</div></div>
+      <div class="stat-card"><div class="stat-icon si-amber">⏳</div><div class="stat-value">12</div><div class="stat-label">Pending Entry</div></div>
+      <div class="stat-card"><div class="stat-icon si-teal">⚠️</div><div class="stat-value">5</div><div class="stat-label">Active Backlogs</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header">My Subjects – Semester 5</div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Code</th><th>Subject</th><th>Credits</th><th>Marks Entered</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr><td class="td-bold">CS501</td><td>Database Systems</td><td>4</td><td>84/85</td><td><span class="badge b-amber">Incomplete</span></td><td><button class="btn btn-blue btn-sm" onclick="navigate('enter-marks')">Enter Marks</button></td></tr>
+              <tr><td class="td-bold">CS502</td><td>Operating Systems</td><td>4</td><td>85/85</td><td><span class="badge b-green">Complete</span></td><td><button class="btn btn-ghost btn-sm" onclick="navigate('enter-marks')">Update</button></td></tr>
+              <tr><td class="td-bold">CS505</td><td>Web Technology</td><td>3</td><td>85/85</td><td><span class="badge b-green">Complete</span></td><td><button class="btn btn-ghost btn-sm" onclick="navigate('enter-marks')">Update</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+  } else {
+    body.innerHTML = `
+    <div class="dashboard-welcome">
+      <h2>Hello, Priya 👋</h2>
+      <p>Semester 5 results are published. Check your result below.</p>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-icon si-green">🎓</div><div class="stat-value">8.9</div><div class="stat-label">Current SGPA</div></div>
+      <div class="stat-card"><div class="stat-icon si-blue">📈</div><div class="stat-value">8.6</div><div class="stat-label">CGPA</div></div>
+      <div class="stat-card"><div class="stat-icon si-amber">⚠️</div><div class="stat-value">0</div><div class="stat-label">Active Backlogs</div></div>
+      <div class="stat-card"><div class="stat-icon si-purple">📄</div><div class="stat-value">5</div><div class="stat-label">Semesters Completed</div></div>
+    </div>
+    <div class="alert alert-success">🎉 Your Semester 5 result has been published. <a href="#" onclick="navigate('view-result')" style="color:var(--success);font-weight:600;margin-left:6px">View Result →</a></div>
+    <div class="card">
+      <div class="card-header">Quick Info</div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          ${[['Roll No','CS2101'],['Branch','Computer Science'],['Semester','5th'],['Academic Year','2024–25'],['Section','A'],['Admitted','2022']].map(([l,v])=>`<div style="padding:10px;background:var(--cream);border-radius:8px"><div style="font-size:10.5px;color:var(--ink3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px">${l}</div><div style="font-weight:600;font-size:14px">${v}</div></div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   MANAGE FACULTY
+───────────────────────────────────────────── */
+function renderManageFaculty(body) {
+  body.innerHTML = `
+  <div class="section-header">
+    <h3>Faculty Members</h3>
+    <button class="btn btn-blue" onclick="showAddModal('faculty')">+ Add Faculty</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Subjects</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${FACULTY_LIST.map(f=>`<tr>
+          <td class="td-bold" style="font-family:var(--font-mono)">${f.id}</td>
+          <td>${f.name}</td>
+          <td>${f.dept}</td>
+          <td style="font-size:12.5px;color:var(--ink3)">${f.subjects.join(', ')}</td>
+          <td><span class="badge b-green">Active</span></td>
+          <td style="display:flex;gap:6px;padding:8px 16px">
+            <button class="btn btn-ghost btn-sm" onclick="showEditModal('faculty','${f.id}')">✏️ Edit</button>
+            <button class="btn btn-red btn-sm" onclick="confirmDelete('faculty','${f.id}')">🗑</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+/* ─────────────────────────────────────────────
+   MANAGE STUDENTS
+───────────────────────────────────────────── */
+function renderManageStudents(body) {
+  body.innerHTML = `
+  <div class="section-header">
+    <h3>Student Records</h3>
+    <button class="btn btn-blue" onclick="showAddModal('student')">+ Add Student</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Roll No</th><th>Name</th><th>Branch</th><th>Semester</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${STUDENTS.map(s=>`<tr>
+          <td class="td-bold" style="font-family:var(--font-mono)">${s.roll}</td>
+          <td>${s.name}</td>
+          <td>${s.branch}</td>
+          <td>Sem ${s.sem}</td>
+          <td><span class="badge b-green">Active</span></td>
+          <td style="display:flex;gap:6px;padding:8px 16px">
+            <button class="btn btn-ghost btn-sm" onclick="showEditModal('student','${s.id}')">✏️ Edit</button>
+            <button class="btn btn-red btn-sm" onclick="confirmDelete('student','${s.id}')">🗑</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+/* ─────────────────────────────────────────────
+   MANAGE SUBJECTS
+───────────────────────────────────────────── */
+function renderManageSubjects(body) {
+  body.innerHTML = `
+  <div class="section-header">
+    <h3>Subject Catalog</h3>
+    <button class="btn btn-blue" onclick="showAddModal('subject')">+ Add Subject</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Code</th><th>Name</th><th>Credits</th><th>Semester</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${SUBJECTS.map(s=>`<tr>
+          <td class="td-bold" style="font-family:var(--font-mono)">${s.code}</td>
+          <td>${s.name}</td>
+          <td>${s.credits}</td>
+          <td>Sem ${s.sem}</td>
+          <td style="display:flex;gap:6px;padding:8px 16px">
+            <button class="btn btn-ghost btn-sm">✏️ Edit</button>
+            <button class="btn btn-red btn-sm">🗑</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+/* ─────────────────────────────────────────────
+   GENERATE RESULT (ADMIN)
+───────────────────────────────────────────── */
+function renderGenerateResult(body) {
+  body.innerHTML = `
+  <div class="card" style="max-width:640px;margin-bottom:20px">
+    <div class="card-header">Generate Result</div>
+    <div class="card-body">
+      <div class="field-row fr-2">
+        <div class="field"><label>Semester</label><select><option>Semester 5</option><option>Semester 6</option></select></div>
+        <div class="field"><label>Academic Year</label><select><option>2024–25</option><option>2023–24</option></select></div>
+      </div>
+      <div class="field-row fr-2">
+        <div class="field"><label>Branch</label><select><option>All Branches</option><option>CSE</option><option>IT</option></select></div>
+        <div class="field"><label>Grading System</label><select><option>10-Point GPA</option><option>Percentage</option></select></div>
+      </div>
+      <button class="btn btn-blue" onclick="generateResult()" style="margin-top:4px">⚙️ Generate Result</button>
+    </div>
+  </div>
+  <div class="alert alert-warning">⚠️ <strong>Rahul Dey (CS2104)</strong> has pending marks in CS503 and CS504. Result cannot be generated until all marks are entered.</div>
+  <div class="card">
+    <div class="card-header">Marks Completeness – Semester 5</div>
+    <div class="card-body" style="padding:0">
+      <table>
+        <thead><tr><th>Student</th><th>Roll No</th><th>CS501</th><th>CS502</th><th>CS503</th><th>CS504</th><th>CS505</th><th>Status</th></tr></thead>
+        <tbody>
+          ${STUDENTS.map(s=>{
+            const m=MARKS_DATA[s.id];
+            return `<tr>
+              <td class="td-bold">${s.name}</td>
+              <td style="font-family:var(--font-mono);font-size:12px">${s.roll}</td>
+              ${SUBJECTS.map(sub=>`<td style="font-family:var(--font-mono);text-align:center">${m[sub.id]!==null&&m[sub.id]!==undefined?m[sub.id]:'<span style="color:var(--danger)">—</span>'}</td>`).join('')}
+              <td>${Object.values(m).some(v=>v===null)?'<span class="badge b-red">Incomplete</span>':'<span class="badge b-green">Complete</span>'}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+function generateResult() {
+  showToast('⚠️ Cannot generate: 1 student has pending marks.', 'error');
+}
+
+/* ─────────────────────────────────────────────
+   MANAGE RESULT (ADMIN)
+───────────────────────────────────────────── */
+function renderManageResult(body) {
+  body.innerHTML = `
+  <div class="section-header">
+    <h3>Result Management – Semester 5</h3>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost">Filter ▾</button>
+      <button class="btn btn-blue" onclick="publishAll()">📢 Publish All</button>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Student</th><th>Roll No</th><th>SGPA</th><th>CGPA</th><th>Pass/Fail</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${RESULTS.map(r=>`<tr>
+          <td class="td-bold">${r.name}</td>
+          <td style="font-family:var(--font-mono);font-size:12px">${r.roll}</td>
+          <td style="font-family:var(--font-mono)">${r.sgpa??'–'}</td>
+          <td style="font-family:var(--font-mono)">${r.cgpa??'–'}</td>
+          <td>${r.sgpa?`<span class="badge ${r.sgpa>=5?'b-green':'b-red'}">${r.sgpa>=5?'PASS':'FAIL'}</span>`:'<span class="badge b-gray">N/A</span>'}</td>
+          <td>${{PUBLISHED:'<span class="badge b-green">Published</span>',DRAFT:'<span class="badge b-blue">Draft</span>',PENDING:'<span class="badge b-amber">Pending Approval</span>'}[r.status]}</td>
+          <td style="display:flex;gap:6px;padding:8px 16px">
+            ${r.status==='PENDING'?`<button class="btn btn-green btn-sm" onclick="publishResult('${r.id}')">✅ Publish</button>`:''}
+            ${r.status==='DRAFT'?`<button class="btn btn-ghost btn-sm">📋 Review</button>`:''}
+            ${r.status==='PUBLISHED'?`<button class="btn btn-ghost btn-sm">👁 View</button>`:''}
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+function publishResult(id) { showToast('✅ Result published successfully!', 'success'); }
+function publishAll() { showToast('📢 Publishing all pending results…', 'info'); }
+
+/* ─────────────────────────────────────────────
+   ENTER MARKS (FACULTY)
+───────────────────────────────────────────── */
+function renderEnterMarks(body) {
+  body.innerHTML = `
+  <div class="steps" style="max-width:520px;margin-bottom:24px">
+    <div class="step done"><div class="step-num">✓</div><span>Select Subject</span></div>
+    <div class="step-line done"></div>
+    <div class="step active"><div class="step-num">2</div><span>Enter Marks</span></div>
+    <div class="step-line"></div>
+    <div class="step"><div class="step-num">3</div><span>Submit</span></div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-header">
+      <span>📚 CS501 – Database Systems &nbsp; <span class="badge b-blue">Semester 5</span></span>
+      <select style="padding:6px 10px;border:1.5px solid var(--line);border-radius:7px;font-size:13px;font-family:var(--font-body)">
+        <option>CS501 – Database Systems</option>
+        <option>CS502 – Operating Systems</option>
+        <option>CS505 – Web Technology</option>
+      </select>
+    </div>
+    <div class="card-body" style="padding:0">
+      <table class="marks-table">
+        <thead><tr><th>Roll No</th><th>Student Name</th><th>Max Marks</th><th>Marks Obtained</th><th>Status</th></tr></thead>
+        <tbody>
+          ${STUDENTS.map(s=>{
+            const m = MARKS_DATA[s.id].SU01;
+            return `<tr>
+              <td style="font-family:var(--font-mono)">${s.roll}</td>
+              <td class="td-bold">${s.name}</td>
+              <td style="font-family:var(--font-mono);text-align:center">100</td>
+              <td style="text-align:center"><input type="number" min="0" max="100" value="${m??''}" placeholder="–" onchange="validateMark(this)"></td>
+              <td>${m?'<span class="badge b-green">Entered</span>':'<span class="badge b-gray">Pending</span>'}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div style="padding:16px 20px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost">Cancel</button>
+      <button class="btn btn-blue" onclick="submitMarks()">💾 Save Marks</button>
+    </div>
+  </div>`;
+}
+function validateMark(el) {
+  const v = parseInt(el.value);
+  if (v < 0) el.value = 0;
+  if (v > 100) el.value = 100;
+}
+function submitMarks() { showToast('✅ Marks saved successfully (200 OK)', 'success'); }
+
+/* ─────────────────────────────────────────────
+   BACKLOGS (FACULTY)
+───────────────────────────────────────────── */
+function renderBacklogs(body) {
+  body.innerHTML = `
+  <div class="section-header">
+    <h3>Student Backlogs</h3>
+    <button class="btn btn-blue" onclick="showAddBacklogModal()">+ Add Backlog</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Student</th><th>Roll No</th><th>Subject</th><th>Academic Year</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${BACKLOGS.map(b=>`<tr>
+          <td class="td-bold">${b.student}</td>
+          <td style="font-family:var(--font-mono);font-size:12px">${b.roll}</td>
+          <td>${b.subject}</td>
+          <td style="font-family:var(--font-mono)">${b.year}</td>
+          <td><span class="badge ${b.status==='ACTIVE'?'b-red':'b-green'}">${b.status}</span></td>
+          <td style="display:flex;gap:6px;padding:8px 16px">
+            <button class="btn btn-green btn-sm" onclick="clearBacklog('${b.id}')">✅ Clear</button>
+            <button class="btn btn-red btn-sm">🗑</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+function clearBacklog(id) { showToast('✅ Backlog marked as cleared.', 'success'); }
+
+/* ─────────────────────────────────────────────
+   MANAGE RESULT (FACULTY)
+───────────────────────────────────────────── */
+function renderManageResultFaculty(body) {
+  body.innerHTML = `
+  <div class="card" style="max-width:640px;margin-bottom:20px">
+    <div class="card-header">Result Approval Workflow</div>
+    <div class="card-body">
+      <div class="workflow">
+        <div class="wf-step">
+          <div class="wf-dot done">✓</div>
+          <div class="wf-label">Marks Entered</div>
+          <div class="wf-line done"></div>
+        </div>
+        <div class="wf-step">
+          <div class="wf-dot done">✓</div>
+          <div class="wf-label">Generated</div>
+          <div class="wf-line"></div>
+        </div>
+        <div class="wf-step">
+          <div class="wf-dot current">3</div>
+          <div class="wf-label">Submit for Approval</div>
+          <div class="wf-line"></div>
+        </div>
+        <div class="wf-step">
+          <div class="wf-dot pending">4</div>
+          <div class="wf-label">Admin Publishes</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="section-header"><h3>Draft Results – Semester 5</h3></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Student</th><th>Roll No</th><th>SGPA</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody>
+        ${RESULTS.filter(r=>r.status!=='PUBLISHED').map(r=>`<tr>
+          <td class="td-bold">${r.name}</td>
+          <td style="font-family:var(--font-mono);font-size:12px">${r.roll}</td>
+          <td style="font-family:var(--font-mono)">${r.sgpa??'–'}</td>
+          <td>${{DRAFT:'<span class="badge b-blue">Draft</span>',PENDING:'<span class="badge b-amber">Pending Approval</span>'}[r.status]||''}</td>
+          <td>${r.status==='DRAFT'?`<button class="btn btn-blue btn-sm" onclick="submitForApproval('${r.id}')">📤 Submit for Approval</button>`:`<span style="font-size:12px;color:var(--ink3)">Awaiting admin…</span>`}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+function submitForApproval(id) { showToast('📤 Result submitted for admin approval.', 'info'); }
+
+/* ─────────────────────────────────────────────
+   VIEW RESULT (STUDENT)
+───────────────────────────────────────────── */
+function renderViewResult(body) {
+  const result = RESULTS.find(r=>r.studentId==='S001');
+  body.innerHTML = `
+  <div class="result-card">
+    <div class="result-card-header">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <h2>Academic Result Card</h2>
+          <p>Semester 5 · Academic Year 2024–25 · Computer Science</p>
+        </div>
+        <button class="btn btn-blue" onclick="downloadPDF()">⬇ Download PDF</button>
+      </div>
+    </div>
+    <div class="result-meta">
+      <div class="result-meta-item"><div class="rm-val">Priya Mondal</div><div class="rm-label">Student Name</div></div>
+      <div class="result-meta-item"><div class="rm-val" style="font-family:var(--font-mono)">CS2101</div><div class="rm-label">Roll Number</div></div>
+      <div class="result-meta-item"><div class="rm-val">5th</div><div class="rm-label">Semester</div></div>
+      <div class="result-meta-item"><div class="rm-val">CSE · A</div><div class="rm-label">Branch / Section</div></div>
+    </div>
+    <div class="sgpa-display">
+      <div class="gpa-circle"><div class="gpa-val">8.9</div><div class="gpa-label">SGPA</div></div>
+      <div class="gpa-circle" style="border-color:var(--admin-c)"><div class="gpa-val" style="color:var(--admin-c)">8.6</div><div class="gpa-label">CGPA</div></div>
+      <div class="status-pill sp-pass">✅ PASS</div>
+    </div>
+    <div style="padding:0 0 0 0">
+      <table>
+        <thead><tr><th>Code</th><th>Subject</th><th>Credits</th><th>Marks</th><th>Grade</th><th>Grade Point</th></tr></thead>
+        <tbody>
+          ${[['CS501','Database Systems',4,82,'A',9],['CS502','Operating Systems',4,78,'B+',8],['CS503','Computer Networks',3,91,'O',10],['CS504','Algorithms',4,85,'A',9],['CS505','Web Technology',3,88,'A+',9]].map(([c,n,cr,m,g,gp])=>`<tr>
+            <td style="font-family:var(--font-mono)">${c}</td>
+            <td class="td-bold">${n}</td>
+            <td style="text-align:center">${cr}</td>
+            <td style="font-family:var(--font-mono);text-align:center"><b>${m}</b>/100</td>
+            <td style="text-align:center"><span class="badge ${gp>=9?'b-green':'b-blue'}">${g}</span></td>
+            <td style="font-family:var(--font-mono);text-align:center">${gp}.0</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div style="padding:16px 20px;background:var(--cream);border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:12px;color:var(--ink3);font-family:var(--font-mono)">Published: 15 May 2026 · Verified by Registrar</span>
+      <span class="badge b-green">✅ OFFICIAL</span>
+    </div>
+  </div>`;
+}
+function downloadPDF() { showToast('⬇ Generating PDF… download will start shortly.', 'info'); }
+
+/* ─────────────────────────────────────────────
+   VIEW BACKLOGS (STUDENT)
+───────────────────────────────────────────── */
+function renderViewBacklogs(body) {
+  body.innerHTML = `
+  <div class="alert alert-success">✅ You have no active backlogs. Keep it up!</div>
+  <div class="card">
+    <div class="card-header">Backlog History</div>
+    <div class="card-body">
+      <div class="empty-state">
+        <div class="es-icon">🎉</div>
+        <p style="font-weight:600;color:var(--ink);margin-bottom:4px">No backlogs on record</p>
+        <p>You have cleared all subjects without any arrears.</p>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ─────────────────────────────────────────────
+   CHANGE PASSWORD
+───────────────────────────────────────────── */
+function renderChangePassword(body) {
+  body.innerHTML = `
+  <div class="card" style="max-width:480px">
+    <div class="card-header">Change Password</div>
+    <div class="card-body">
+      ${currentRole==='admin'?`
+      <div class="field" style="margin-bottom:14px">
+        <label>Select User (Admin can reset any)</label>
+        <select>
+          <option>— My own password —</option>
+          <optgroup label="Faculty">
+            <option>Prof. Anita Mishra</option>
+            <option>Dr. Sanjay Bose</option>
+          </optgroup>
+          <optgroup label="Students">
+            <option>Priya Mondal (CS2101)</option>
+            <option>Arjun Das (CS2102)</option>
+          </optgroup>
+        </select>
+      </div>`:''}
+      <div class="field" style="margin-bottom:14px">
+        <label>Current Password</label>
+        <input type="password" placeholder="Enter current password" id="cpOld">
+      </div>
+      <div class="field" style="margin-bottom:14px">
+        <label>New Password</label>
+        <input type="password" placeholder="Min 8 characters" id="cpNew" oninput="checkStrength(this)">
+        <div class="pwd-strength"><div class="pwd-strength-bar" id="strengthBar" style="width:0%;background:var(--danger)"></div></div>
+      </div>
+      <div class="field" style="margin-bottom:20px">
+        <label>Confirm New Password</label>
+        <input type="password" placeholder="Re-enter new password" id="cpConfirm">
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" style="flex:1">Cancel</button>
+        <button class="btn btn-blue" style="flex:2" onclick="changePassword()">🔑 Update Password</button>
+      </div>
+    </div>
+  </div>`;
+}
+function checkStrength(el) {
+  const v = el.value;
+  const bar = document.getElementById('strengthBar');
+  if (!bar) return;
+  let score = 0;
+  if (v.length >= 8) score++;
+  if (/[A-Z]/.test(v)) score++;
+  if (/[0-9]/.test(v)) score++;
+  if (/[^A-Za-z0-9]/.test(v)) score++;
+  const w = [0,25,50,75,100][score];
+  const c = ['','var(--danger)','var(--warning)','var(--warning)','var(--success)'][score];
+  bar.style.width = w + '%';
+  bar.style.background = c;
+}
+function changePassword() {
+  const old = document.getElementById('cpOld')?.value;
+  const n = document.getElementById('cpNew')?.value;
+  const c = document.getElementById('cpConfirm')?.value;
+  if (!old) { showToast('⚠️ Enter current password', 'error'); return; }
+  if (n !== c) { showToast('⚠️ Passwords do not match', 'error'); return; }
+  if (n && n.length < 8) { showToast('⚠️ Password must be at least 8 characters', 'error'); return; }
+  showToast('✅ Password updated successfully (200 OK)', 'success');
+}
+
+/* ─────────────────────────────────────────────
+   MODALS
+───────────────────────────────────────────── */
+function showAddModal(type) {
+  const titles = { faculty:'Add New Faculty', student:'Add New Student', subject:'Add New Subject' };
+  const bodies = {
+    faculty: `<div class="field-row fr-2"><div class="field"><label>Full Name</label><input type="text" placeholder="Prof. Name"></div><div class="field"><label>Email</label><input type="email" placeholder="email@uni.edu"></div></div><div class="field-row fr-2"><div class="field"><label>Department</label><select><option>CSE</option><option>IT</option><option>ECE</option></select></div><div class="field"><label>Designation</label><select><option>Professor</option><option>Assoc. Professor</option><option>Asst. Professor</option></select></div></div>`,
+    student: `<div class="field-row fr-2"><div class="field"><label>Full Name</label><input type="text" placeholder="Student Name"></div><div class="field"><label>Roll Number</label><input type="text" placeholder="CS2106"></div></div><div class="field-row fr-2"><div class="field"><label>Branch</label><select><option>CSE</option><option>IT</option></select></div><div class="field"><label>Semester</label><select>${[1,2,3,4,5,6,7,8].map(n=>`<option>Semester ${n}</option>`).join('')}</select></div></div><div class="field-row fr-2"><div class="field"><label>Email</label><input type="email" placeholder="student@uni.edu"></div><div class="field"><label>Academic Year</label><select><option>2024–25</option><option>2023–24</option></select></div></div>`,
+    subject: `<div class="field-row fr-2"><div class="field"><label>Subject Code</label><input type="text" placeholder="CS506"></div><div class="field"><label>Subject Name</label><input type="text" placeholder="Full name"></div></div><div class="field-row fr-3"><div class="field"><label>Credits</label><select><option>2</option><option>3</option><option>4</option></select></div><div class="field"><label>Semester</label><select>${[1,2,3,4,5,6,7,8].map(n=>`<option>Sem ${n}</option>`).join('')}</select></div><div class="field"><label>Branch</label><select><option>CSE</option><option>IT</option></select></div></div>`,
+  };
+  openModal(titles[type], bodies[type], [
+    { label:'Cancel', cls:'btn-ghost', action:'closeModal()' },
+    { label:'Save', cls:'btn-blue', action:`saveItem('${type}')` },
+  ]);
+}
+function showEditModal(type, id) {
+  openModal(`Edit ${type.charAt(0).toUpperCase()+type.slice(1)}`,
+    `<div class="alert alert-info">ℹ️ Editing ID: <strong style="font-family:var(--font-mono)">${id}</strong></div><div class="field"><label>Name</label><input type="text" value="${type==='faculty'?FACULTY_LIST.find(f=>f.id===id)?.name:STUDENTS.find(s=>s.id===id)?.name}"></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', action:'closeModal()' },{ label:'Update', cls:'btn-blue', action:"saveItem('edit')" }]
+  );
+}
+function confirmDelete(type, id) {
+  openModal('Confirm Deletion',
+    `<div class="alert alert-warning">⚠️ Are you sure you want to delete this ${type}? This action cannot be undone.</div>`,
+    [{ label:'Cancel', cls:'btn-ghost', action:'closeModal()' },{ label:'Delete', cls:'btn-red', action:`doDelete('${type}','${id}')` }]
+  );
+}
+function showAddBacklogModal() {
+  openModal('Add Student Backlog',
+    `<div class="field-row"><div class="field"><label>Student</label><select><option>Rahul Dey (CS2104)</option><option>Meena Ghosh (CS2105)</option></select></div></div><div class="field-row fr-2"><div class="field"><label>Subject</label><select>${SUBJECTS.map(s=>`<option>${s.code} – ${s.name}</option>`).join('')}</select></div><div class="field"><label>Academic Year</label><select><option>2024–25</option><option>2023–24</option></select></div></div>`,
+    [{ label:'Cancel', cls:'btn-ghost', action:'closeModal()' },{ label:'Add Backlog', cls:'btn-blue', action:"saveItem('backlog')" }]
+  );
+}
+function openModal(title, bodyHtml, buttons) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = bodyHtml;
+  document.getElementById('modalFooter').innerHTML = buttons.map(b=>
+    `<button class="btn ${b.cls}" onclick="${b.action}">${b.label}</button>`
+  ).join('');
+  document.getElementById('modalBg').classList.add('open');
+}
+function closeModal() { document.getElementById('modalBg').classList.remove('open'); }
+function saveItem(type) { closeModal(); showToast('✅ Record saved successfully.', 'success'); }
+function doDelete(type, id) { closeModal(); showToast('🗑 Record deleted.', 'success'); }
+
+/* ─────────────────────────────────────────────
+   TOAST
+───────────────────────────────────────────── */
+function showToast(msg, type='info') {
+  const wrap = document.getElementById('toastWrap');
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.textContent = msg;
+  wrap.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity .4s'; setTimeout(()=>t.remove(), 400); }, 3500);
+}
+
+/* close modal on bg click */
+document.getElementById('modalBg').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+/* Enter key on login */
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && document.getElementById('screen-login').classList.contains('active')) doLogin();
+});
+</script>
+</body>
+</html>

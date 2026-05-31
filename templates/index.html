@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - TIU</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/global.css">
+</head>
+<body>
+
+  <div id="screen-login">
+    <div class="login-panel-left">
+      <span class="lpl-tag">Secured System Gateway</span>
+      <h2 class="lpl-heading">Unified Scholar Ledger</h2>
+      <p class="lpl-sub">Manage, evaluate, and view real-time grading reports securely across institutional divisions.</p>
+      <div class="lpl-features">
+        <div class="lpl-feat"><div class="lpl-feat-dot"></div> Cryptographically Secured Portals</div>
+        <div class="lpl-feat"><div class="lpl-feat-dot"></div> Dynamic Grade Ledger Automation</div>
+        <div class="lpl-feat"><div class="lpl-feat-dot"></div> Instant Transcript Compilations</div>
+      </div>
+    </div>
+
+    <div class="login-panel-right">
+      <div class="login-card">
+        <div class="login-logo">
+          <div class="logo-mark">🎓</div>
+          <h1>Welcome back</h1>
+          <p>Sign in to your TIU account</p>
+        </div>
+
+        <div class="role-tabs">
+          <button class="role-tab active" data-role="admin" onclick="selectRole('admin')">Admin</button>
+          <button class="role-tab" data-role="faculty" onclick="selectRole('faculty')">Faculty</button>
+          <button class="role-tab" data-role="student" onclick="selectRole('student')">Student</button>
+        </div>
+
+        {% if error %}
+        <div class="login-error" id="loginError" style="display: flex;">{{ error }}</div>
+        {% endif %}
+
+        <form action="{{ url_for('login') }}" method="POST" id="loginForm">
+          <input type="hidden" name="role" id="loginRole" value="admin">
+
+          <div class="form-group">
+            <label for="loginEmail">Email Address</label>
+            <input type="email" name="email" id="loginEmail" placeholder="Enter your registered email" autocomplete="off" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="loginPwd">Password</label>
+            <input type="password" name="password" id="loginPwd" placeholder="Enter your account password" required>
+          </div>
+          
+          <button type="submit" class="btn-primary">Sign In →</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Handles cosmetic tab toggling and updates the hidden input element
+    function selectRole(role) {
+      document.getElementById('loginRole').value = role;
+      document.querySelectorAll('.role-tab').forEach(btn => btn.classList.remove('active'));
+      document.querySelector(`[data-role="${role}"]`).classList.add('active');
+    }
+  </script>
+</body>
+</html>

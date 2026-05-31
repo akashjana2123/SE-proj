@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faculty Panel - TIU</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/global.css">
+</head>
+<body>
+
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <div id="screen-app">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-row"><div class="logo-icon">🎓</div><div><div class="logo-text">TIU</div><div class="logo-sub">Faculty Console</div></div></div>
+      </div>
+      <div class="sidebar-user">
+        <div class="user-role" style="color: var(--faculty-c)">FACULTY EVALUATOR</div>
+        <div class="user-name">Prof. Anita Mishra</div>
+        <div class="user-email" id="userEmailTag">faculty@university.edu</div>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" onclick="switchFacultyTab('dashboard', this)">📊 Dashboard Overview</button>
+        <button class="nav-item" onclick="switchFacultyTab('marks', this)">✏️ Entry / Audit Logs</button>
+        <button class="nav-item" onclick="switchFacultyTab('backlogs', this)">⚠️ Deficit Portfolios</button>
+        <button class="nav-item" onclick="switchFacultyTab('password', this)">🔑 Account Security</button>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="btn-logout" onclick="window.location.href='index.html'">🚪 Sign Out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="topbar">
+        <div class="topbar-title" id="pageTitle">Faculty Workspace</div>
+        <div class="topbar-right"><span class="topbar-badge badge-faculty">EVALUATOR MATRIX</span></div>
+      </div>
+      <div class="page-body" id="facultyContainer"></div>
+    </main>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    if(urlParams.get('email')) document.getElementById('userEmailTag').textContent = urlParams.get('email');
+
+    function showToast(msg, type='info') {
+      const wrap = document.getElementById('toastWrap');
+      const t = document.createElement('div');
+      t.className = `toast toast-${type}`;
+      t.textContent = msg;
+      wrap.appendChild(t);
+      setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity .4s'; setTimeout(()=>t.remove(), 400); }, 3500);
+    }
+
+    function switchFacultyTab(tabId, element) {
+      if(element) {
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        element.classList.add('active');
+      }
+
+      const container = document.getElementById('facultyContainer');
+      if (tabId === 'dashboard') {
+        container.innerHTML = `
+          <div class="dashboard-welcome"><h2>Hello, Professor Mishra 👋</h2><p>System configuration status allocation for active allocations.</p></div>
+          <div class="stat-grid">
+            <div class="stat-card"><div class="stat-icon si-blue">📚</div><div class="stat-value">3</div><div class="stat-label">Assigned Subjects</div></div>
+            <div class="stat-card"><div class="stat-icon si-green">✅</div><div class="stat-value">248</div><div class="stat-label">Evaluations Logged</div></div>
+            <div class="stat-card"><div class="stat-icon si-teal">⚠️</div><div class="stat-value">3</div><div class="stat-label">Active Backlogs</div></div>
+          </div>
+        `;
+      } else if (tabId === 'marks') {
+        container.innerHTML = `
+          <div class="card">
+            <div class="card-header">Academic Score Management Matrix</div>
+            <div class="card-body">
+              <table class="marks-table" style="width:100%">
+                <thead><tr><th>Student Roll</th><th>Legal Name</th><th>Max Score Weight</th><th>Obtained Assessment</th></tr></thead>
+                <tbody>
+                  <tr><td>CS2101</td><td class="td-bold">Priya Mondal</td><td>100 Allocation</td><td><input type="number" value="82" class="field"></td></tr>
+                  <tr><td>CS2102</td><td class="td-bold">Arjun Das</td><td>100 Allocation</td><td><input type="number" value="74" class="field"></td></tr>
+                </tbody>
+              </table>
+              <div style="margin-top:16px; text-align:right"><button class="btn btn-blue" onclick="showToast('Grade Registry Batch Changes Committed Successfully','success')">💾 Update Grade Changes</button></div>
+            </div>
+          </div>
+        `;
+      } else if (tabId === 'backlogs') {
+        container.innerHTML = `
+          <div class="section-header"><h3>Active Outstanding Arrear Ledgers</h3></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Deficit Scholar</th><th>Identifier</th><th>Subject Field Outstandings</th><th>Action Vector</th></tr></thead>
+              <tbody>
+                <tr><td class="td-bold">Rahul Dey</td><td>CS2104</td><td>CS503 - Computer Networks</td><td><button class="btn btn-green btn-sm" onclick="showToast('Cleared Assessment Event Registered','success')">✅ Sign Off / Clear</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        `;
+      } else if (tabId === 'password') {
+        container.innerHTML = `
+          <div class="card" style="max-width:480px"><div class="card-header">Update Authentication Matrix</div><div class="card-body"><div class="field"><label>Target Pass Phrase</label><input type="password" class="field"></div><br><button class="btn btn-blue" onclick="showToast('Passkey altered securely.','success')">Commit Change</button></div></div>
+        `;
+      }
+    }
+
+    switchFacultyTab('dashboard');
+  </script>
+</body>
+</html>
