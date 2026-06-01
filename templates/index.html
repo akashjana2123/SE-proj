@@ -9,6 +9,12 @@
 </head>
 <body>
 
+  {% set roles = [
+    {'id': 'admin', 'label': 'Admin'},
+    {'id': 'faculty', 'label': 'Faculty'},
+    {'id': 'student', 'label': 'Student'}
+  ] %}
+
   <div id="screen-login">
     <div class="login-panel-left">
       <span class="lpl-tag">Secured System Gateway</span>
@@ -30,17 +36,30 @@
         </div>
 
         <div class="role-tabs">
-          <button type="button" class="role-tab active" data-role="admin" onclick="selectRole('admin')">Admin</button>
-          <button type="button" class="role-tab" data-role="faculty" onclick="selectRole('faculty')">Faculty</button>
-          <button type="button" class="role-tab" data-role="student" onclick="selectRole('student')">Student</button>
+          {% for role in roles %}
+            <button type="button" 
+                    class="role-tab {% if loop.first %}active{% endif %}" 
+                    data-role="{{ role.id }}" 
+                    onclick="selectRole('{{ role.id }}')">
+              {{ role.label }}
+            </button>
+          {% endfor %}
         </div>
 
         {% if error %}
-        <div class="login-error" id="loginError" style="display: flex;">{{ error }}</div>
+          <div class="login-error" id="loginError" style="display: flex;">{{ error }}</div>
         {% endif %}
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="login-error {{ category }}" style="display: flex;">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
 
         <form action="{{ url_for('login') }}" method="POST" id="loginForm">
-          <input type="hidden" name="role" id="loginRole" value="admin">
+          <input type="hidden" name="role" id="loginRole" value="{{ roles[0].id }}">
 
           <div class="form-group">
             <label for="loginEmail">Email Address</label>
@@ -67,7 +86,8 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-      selectRole('admin');
+      // Defaults to the first role defined by Jinja dynamically
+      selectRole('{{ roles[0].id }}');
     });
   </script>
 </body>

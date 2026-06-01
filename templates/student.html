@@ -14,20 +14,27 @@
   <div id="screen-app">
     <aside class="sidebar">
       <div class="sidebar-logo">
-        <div class="logo-row"><div class="logo-icon">🎓</div><div><div class="logo-text">TIU</div><div class="logo-sub">Scholar Registry</div></div></div>
+        <div class="logo-row">
+          <div class="logo-icon">🎓</div>
+          <div>
+            <div class="logo-text">TIU</div>
+            <div class="logo-sub">Scholar Registry</div>
+          </div>
+        </div>
       </div>
       <div class="sidebar-user">
         <div class="user-role" style="color: var(--student-c)">UNDERGRADUATE CANDIDATE</div>
-        <div class="user-name">Priya Mondal</div>
-        <div class="user-email" id="userEmailTag">priya@university.edu</div>
+        <div class="user-name">{{ student.name }}</div>
+        <div class="user-email" id="userEmailTag">{{ student.email }}</div>
       </div>
       <nav class="sidebar-nav">
-        <button class="nav-item active" onclick="switchStudentTab('dashboard', this)">📊 Matrix Overview</button>
-        <button class="nav-item" onclick="switchStudentTab('result', this)">📄 View Academic Transcripts</button>
-        <button class="nav-item" onclick="switchStudentTab('backlogs', this)">⚠️ Structural Backlogs</button>
+        <button class="nav-item active" id="nav-dashboard" onclick="switchStudentTab('dashboard', this)">📊 Matrix Overview</button>
+        <button class="nav-item" id="nav-result" onclick="switchStudentTab('result', this)">📄 View Academic Transcripts</button>
+        <button class="nav-item" id="nav-backlogs" onclick="switchStudentTab('backlogs', this)">⚠️ Structural Backlogs</button>
+        <button class="nav-item" id="nav-password" onclick="switchStudentTab('password', this)">🔑 Change Password</button>
       </nav>
       <div class="sidebar-footer">
-        <button class="btn-logout" onclick="window.location.href='index.html'">🚪 Terminate Portal Connection</button>
+        <a href="/logout" class="btn-logout" style="text-align: center; text-decoration: none; display: block;">🚪 Terminate Portal Connection</a>
       </div>
     </aside>
 
@@ -41,8 +48,20 @@
   </div>
 
   <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    if(urlParams.get('email')) document.getElementById('userEmailTag').textContent = urlParams.get('email');
+    // Initial data pipeline unpacked cleanly from our Flask session controller structure
+    const studentProfile = {
+      name: "{{ student.name }}",
+      rollNo: "{{ student.roll_no }}",
+      currentSem: parseInt("{{ student.current_sem }}"),
+      section: "{{ student.section }}",
+      branch: "{{ student.branch }}",
+      academicYear: "{{ student.academic_year }}",
+      admittedYear: "{{ student.admitted_year }}",
+      sgpa: parseFloat("{{ student.sgpa }}"),
+      cgpa: parseFloat("{{ student.cgpa }}"),
+      completedSems: parseInt("{{ student.completed_sems }}"),
+      backlogsCount: parseInt("{{ student.backlogs_count }}")
+    };
 
     function showToast(msg, type='info') {
       const wrap = document.getElementById('toastWrap');
@@ -53,6 +72,322 @@
       setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity .4s'; setTimeout(()=>t.remove(), 400); }, 3500);
     }
 
+    // 1. DASHBOARD COMPONENT VIEW LAYOUT
+    function renderDashboardTab() {
+      let optionsHtml = '';
+      for(let i = 1; i <= 8; i++) {
+        optionsHtml += `<option value="${i}" ${i === studentProfile.currentSem ? 'selected' : ''}>Semester ${i}</option>`;
+      }
+
+      return `
+        <div class="dashboard-welcome">
+          <h2>Welcome Back, ${studentProfile.name} 👋</h2>
+          <p>Real-time Academic Ledger tracking for structural validation metrics.</p>
+        </div>
+
+        <div class="card" style="margin-bottom: 24px;">
+          <div class="card-body" style="display: flex; align-items: center; gap: 14px; padding: 14px 20px;">
+            <div class="field" style="margin: 0; display: flex; align-items: center; gap: 12px;">
+              <label style="margin: 0; white-space: nowrap;">Change Semester Filter View:</label>
+              <select id="dashboardSemFilter" onchange="updateDashboardMetrics(this.value)" style="width: auto; min-width: 160px;">
+                ${optionsHtml}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-icon si-green">🎓</div>
+            <div class="stat-value" id="dash-sgpa">${studentProfile.sgpa.toFixed(2)}</div>
+            <div class="stat-label">Term SGPA Metric</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon si-blue">📈</div>
+            <div class="stat-value" id="dash-cgpa">${studentProfile.cgpa.toFixed(2)}</div>
+            <div class="stat-label">Cumulative CGPA Baseline</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon si-purple">📄</div>
+            <div class="stat-value">${studentProfile.completedSems}</div>
+            <div class="stat-label">Completed Study Semesters</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon si-amber">⚠️</div>
+            <div class="stat-value">${studentProfile.backlogsCount}</div>
+            <div class="stat-label">Active Structural Backlogs</div>
+          </div>
+        </div>
+
+        <div class="section-header"><h3>Quick Info Desk Reference</h3></div>
+        ${renderQuickInfoPanel()}
+      `;
+    }
+
+    // Quick Info Card using global table structures for crisp desktop scannability
+    function renderQuickInfoPanel() {
+      return `
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Student Roll Number</th>
+                <th>Current Semester</th>
+                <th>Section</th>
+                <th>Branch</th>
+                <th>Academic Year</th>
+                <th>Admitted Year</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="td-bold">${studentProfile.rollNo}</td>
+                <td>Semester ${studentProfile.currentSem}</td>
+                <td>${studentProfile.section}</td>
+                <td>${studentProfile.branch}</td>
+                <td>${studentProfile.academicYear}</td>
+                <td>${studentProfile.admittedYear}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function updateDashboardMetrics(semesterNum) {
+      fetch(`/api/student/semester_data?semester=${semesterNum}`)
+        .then(res => res.json())
+        .then(data => {
+          if(data.has_data) {
+            document.getElementById('dash-sgpa').textContent = data.sgpa.toFixed(2);
+            document.getElementById('dash-cgpa').textContent = data.cgpa.toFixed(2);
+          } else {
+            document.getElementById('dash-sgpa').textContent = "N/A";
+            document.getElementById('dash-cgpa').textContent = "N/A";
+            showToast(data.message, 'info');
+          }
+        })
+        .catch(err => showToast("Error loading metrics sequence pipeline.", "error"));
+    }
+
+    // 2. ACADEMIC TRANSCRIPTS AND DOWNLOAD COMPONENT VIEW
+    function renderResultTab() {
+      let optionsHtml = '';
+      for(let i = 1; i <= 8; i++) {
+        optionsHtml += `<option value="${i}" ${i === studentProfile.currentSem ? 'selected' : ''}>Semester ${i}</option>`;
+      }
+
+      return `
+        <div class="card" style="margin-bottom: 24px;">
+          <div class="card-body" style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 20px;">
+            <div class="field" style="margin: 0; display: flex; align-items: center; gap: 12px;">
+              <label style="margin: 0; white-space: nowrap;">Separate Semester Scorecard:</label>
+              <select id="resultSemFilter" onchange="loadSemesterTranscriptCard(this.value)" style="width: auto; min-width: 160px;">
+                ${optionsHtml}
+              </select>
+            </div>
+            <button class="btn btn-blue" onclick="triggerPdfDownload()">⬇ Download PDF Scorecard</button>
+          </div>
+        </div>
+
+        <div id="transcriptCardContainer"></div>
+      `;
+    }
+
+    function loadSemesterTranscriptCard(semesterNum) {
+      const targetContainer = document.getElementById('transcriptCardContainer');
+      targetContainer.innerHTML = `<p style="font-family:var(--font-mono); color:var(--ink3);">Querying core registry records...</p>`;
+
+      fetch(`/api/student/semester_data?semester=${semesterNum}`)
+        .then(res => res.json())
+        .then(data => {
+          if(!data.has_data) {
+            targetContainer.innerHTML = `
+              <div class="alert alert-warning">
+                ⚠️ No published grading ledger registry records found for Semester ${semesterNum}.
+              </div>`;
+            return;
+          }
+
+          let statusPillClass = data.status === 'PASS' ? 'sp-pass' : 'sp-fail';
+          
+          let tableRowsHtml = '';
+          data.details.forEach(row => {
+            tableRowsHtml += `
+              <tr>
+                <td><code>${row.subject_code}</code></td>
+                <td class="td-bold">${row.subject_name}</td>
+                <td>${row.credits}</td>
+                <td>${row.marks}</td>
+                <td><span class="badge b-blue">${row.grade}</span></td>
+                <td>${row.weighted_points}</td>
+              </tr>
+            `;
+          });
+
+          targetContainer.innerHTML = `
+            <div class="result-card" style="max-width: 100%;">
+              <div class="result-card-header">
+                <h2>Institutional Grading Report Transcript</h2>
+                <p>Term Reference Frame Semester ${semesterNum} • Consolidated Performance Records Matrix</p>
+              </div>
+              <div class="result-meta">
+                <div class="result-meta-item"><div class="rm-val">${studentProfile.name}</div><div class="rm-label">Candidate Name</div></div>
+                <div class="result-meta-item"><div class="rm-val">${studentProfile.rollNo}</div><div class="rm-label">Registration ID</div></div>
+                <div class="result-meta-item"><div class="rm-val">${studentProfile.section}</div><div class="rm-label">Section Allocation</div></div>
+                <div class="result-meta-item"><div class="rm-val">Semester ${semesterNum}</div><div class="rm-label">Term Frame</div></div>
+              </div>
+              
+              <div class="sgpa-display">
+                <div class="gpa-circle"><div class="gpa-val">${data.sgpa.toFixed(2)}</div><div class="gpa-label">SGPA</div></div>
+                <div class="gpa-circle"><div class="gpa-val">${data.cgpa.toFixed(2)}</div><div class="gpa-label">CGPA</div></div>
+                <div class="status-pill ${statusPillClass}">${data.status}</div>
+              </div>
+
+              <div class="table-wrap" style="border: none; border-radius: 0; box-shadow: none; margin: 0;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Subject Code</th>
+                      <th>Subject Name</th>
+                      <th>Credits</th>
+                      <th>Marks Obtained</th>
+                      <th>Grade</th>
+                      <th>Grade Point (${"Credits"} × GP)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${tableRowsHtml}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        })
+        .catch(err => {
+          targetContainer.innerHTML = `<div class="alert alert-danger">Failed compiling transaction logs parameters.</div>`;
+        });
+    }
+
+    function triggerPdfDownload() {
+      const selectedSem = document.getElementById('resultSemFilter').value;
+      showToast("Initializing system layout engine. Building report file...", "info");
+      window.location.href = `/student_dashboard/download_pdf?semester=${selectedSem}`;
+    }
+
+    // 3. STRUCTURAL BACKLOG TRACKING DESK VIEW
+    function renderBacklogsTab() {
+      let optionsHtml = '<option value="all" selected>All Semesters Deficits Matrix</option>';
+      for(let i = 1; i <= 8; i++) {
+        optionsHtml += `<option value="${i}">Semester ${i}</option>`;
+      }
+
+      return `
+        <div class="card" style="margin-bottom: 24px;">
+          <div class="card-body" style="display: flex; align-items: center; gap: 14px; padding: 14px 20px;">
+            <div class="field" style="margin: 0; display: flex; align-items: center; gap: 12px;">
+              <label style="margin: 0; white-space: nowrap;">Semester Filter:</label>
+              <select id="backlogSemFilter" onchange="loadBacklogGrid(this.value)" style="width: auto; min-width: 180px;">
+                ${optionsHtml}
+              </select>
+            </div>
+          </div>
+        </div>
+        <div id="backlogGridContainer"></div>
+      `;
+    }
+
+    function loadBacklogGrid(filterValue) {
+      const targetGrid = document.getElementById('backlogGridContainer');
+      fetch(`/api/student/backlogs?semester=${filterValue}`)
+        .then(res => res.json())
+        .then(data => {
+          if(!data.backlogs || data.backlogs.length === 0) {
+            targetGrid.innerHTML = `
+              <div class="alert alert-success">
+                🎉 Splendid! No outstanding academic deficits or backlog metrics are mapped to this profile scope.
+              </div>`;
+            return;
+          }
+
+          let tableRows = '';
+          data.backlogs.forEach(bl => {
+            tableRows += `
+              <tr>
+                <td><span class="badge b-amber">SEMESTER ${bl.semester}</span></td>
+                <td><code>${bl.subject_code}</code></td>
+                <td class="td-bold">${bl.subject_name}</td>
+                <td><span class="badge b-red">RE-EXAMINATION REQUIRED</span></td>
+              </tr>
+            `;
+          });
+
+          targetGrid.innerHTML = `
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Origin Semester</th>
+                    <th>Subject Code</th>
+                    <th>Subject Name</th>
+                    <th>Status Operations</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${tableRows}
+                </tbody>
+              </table>
+            </div>
+          `;
+        })
+        .catch(err => showToast("Error mapping tracking details from ledger data indexes.", "error"));
+    }
+
+    // 4. USER SECURITY CONTROLS CHANGE PASSWORD VIEW
+    function renderPasswordTab() {
+      return `
+        <div class="card" style="max-width: 520px;">
+          <div class="card-header">🔑 Security Credentials Configuration</div>
+          <div class="card-body">
+            <form id="changePasswordForm" onsubmit="executePasswordChangeWorkflow(event)">
+              <div class="field" style="margin-bottom: 16px;">
+                <label>Current Gateway Password</label>
+                <input type="password" id="oldPasswordInput" required placeholder="••••••••">
+              </div>
+              <div class="field" style="margin-bottom: 20px;">
+                <label>Target Safe Key String</label>
+                <input type="password" id="newPasswordInput" required placeholder="Enter complex new password matrix">
+              </div>
+              <button type="submit" class="btn btn-blue" style="width:100%; justify-content:center;">Commit Mutation Updates</button>
+            </form>
+          </div>
+        </div>
+      `;
+    }
+
+    function executePasswordChangeWorkflow(event) {
+      event.preventDefault();
+      const oldPassword = document.getElementById('oldPasswordInput').value;
+      const newPassword = document.getElementById('newPasswordInput').value;
+
+      fetch('/api/student/change_password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ old_password: oldPassword, new_password: newPassword })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if(data.error) {
+          showToast(data.error, 'error');
+        } else {
+          showToast(data.success, 'success');
+          document.getElementById('changePasswordForm').reset();
+        }
+      })
+      .catch(err => showToast("Network execution fault mapping critical safety packets.", "error"));
+    }
+
+    // NAVIGATION CORE SWITCHBOARD PIPELINE
     function switchStudentTab(tabId, itemRef) {
       if(itemRef) {
         document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
@@ -60,49 +395,29 @@
       }
 
       const container = document.getElementById('studentContainer');
+      const title = document.getElementById('pageTitle');
+
       if(tabId === 'dashboard') {
-        container.innerHTML = `
-          <div class="dashboard-welcome"><h2>Welcome Back, Priya 👋</h2><p>Semester 5 Final Verified Ledger is updated and locked.</p></div>
-          <div class="stat-grid">
-            <div class="stat-card"><div class="stat-icon si-green">🎓</div><div class="stat-value">8.90</div><div class="stat-label">Term SGPA Metric</div></div>
-            <div class="stat-card"><div class="stat-icon si-blue">📈</div><div class="stat-value">8.62</div><div class="stat-label">Cumulative CGPA Baseline</div></div>
-            <div class="stat-card"><div class="stat-icon si-purple">📄</div><div class="stat-value">5</div><div class="stat-label">Completed Study Semesters</div></div>
-          </div>
-          <div class="alert alert-success">🎉 Dynamic Report Card generated for review parameters. <a href="#" onclick="switchStudentTab('result')" style="font-weight:600; text-decoration:underline">Pull Up Transcripts Matrix →</a></div>
-        `;
+        title.textContent = "Scholar Record Desk Overview";
+        container.innerHTML = renderDashboardTab();
       } else if (tabId === 'result') {
-        container.innerHTML = `
-          <div class="result-card">
-            <div class="result-card-header">
-              <div style="display:flex; justify-content:space-between; align-items:center">
-                <div><h2>Institutional Grading Report Transcript</h2><p>Term 5 • Computer Science Engineering Division</p></div>
-                <button class="btn btn-blue" onclick="showToast('Cryptographic Payload Signoff Generated. File Compilation Initiated.','info')">⬇ Download Signed PDF</button>
-              </div>
-            </div>
-            <div class="result-meta">
-              <div class="result-meta-item"><div class="rm-val">Priya Mondal</div><div class="rm-label">Candidate Name</div></div>
-              <div class="result-meta-item"><div class="rm-val">CS2101</div><div class="rm-label">Registration ID</div></div>
-              <div class="result-meta-item"><div class="rm-val">8.90</div><div class="rm-label">SGPA</div></div>
-              <div class="result-meta-item"><div class="rm-val">PASS STATUS</div><div class="rm-label">Outcome</div></div>
-            </div>
-            <table style="width:100%">
-              <thead><tr><th>Course Code</th><th>Title Mapping</th><th>Weight Capacity</th><th>Assigned Grade</th></tr></thead>
-              <tbody>
-                <tr><td>CS501</td><td class="td-bold">Database Management Architectures</td><td>4 Units Weight</td><td><span class="badge b-green">A</span></td></tr>
-                <tr><td>CS502</td><td class="td-bold">Distributed Operating Systems</td><td>4 Units Weight</td><td><span class="badge b-blue">B+</span></td></tr>
-                <tr><td>CS503</td><td class="td-bold">Routing Network Topologies</td><td>3 Units Weight</td><td><span class="badge b-green">O</span></td></tr>
-              </tbody>
-            </table>
-          </div>
-        `;
+        title.textContent = "Academic Ledger Transcripts";
+        container.innerHTML = renderResultTab();
+        loadSemesterTranscriptCard(studentProfile.currentSem);
       } else if (tabId === 'backlogs') {
-        container.innerHTML = `
-          <div class="alert alert-success">✅ Splendid! No outstanding academic deficits or backlog metrics are mapped to this portfolio registration signature.</div>
-        `;
+        title.textContent = "Deficit Matrix Verification Desk";
+        container.innerHTML = renderBacklogsTab();
+        loadBacklogGrid('all');
+      } else if (tabId === 'password') {
+        title.textContent = "Security Matrix Configuration Manager";
+        container.innerHTML = renderPasswordTab();
       }
     }
 
-    switchStudentTab('dashboard');
+    // Direct Bootloader hook on DOM completion
+    document.addEventListener("DOMContentLoaded", () => {
+      switchStudentTab('dashboard');
+    });
   </script>
 </body>
 </html>

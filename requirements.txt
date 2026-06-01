@@ -3,3 +3,7 @@ flask_sqlalchemy
 Flask-Migrate
 jinja2
 werkzeug
+pdfkit
+xhtml2pdf
+reportlab
+pypdf2
