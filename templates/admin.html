@@ -86,6 +86,7 @@
 
     // Dynamic Central View Routing Mechanism
     async function switchTab(viewId) {
+      console.log('switchTab ->', viewId);
       document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
       const activeBtn = document.getElementById(`btn-${viewId}`);
       if(activeBtn) activeBtn.classList.add('active');
@@ -167,11 +168,34 @@
       else if(viewId === 'faculty') {
         document.getElementById('pageTitle').textContent = 'Faculty Profiles Registry';
         container.innerHTML = `<div style='padding:20px; color:var(--ink3)'>Loading faculty registers...</div>`;
-        const res = await fetch('/api/admin/faculty');
-        const list = await res.json();
+        let res, list;
+        try {
+          res = await fetch('/api/admin/faculty');
+          if (!res.ok) {
+            const errText = await res.text();
+            console.error('Failed to fetch /api/admin/faculty', res.status, errText);
+            showToast('Failed to load faculty data', 'error');
+            container.innerHTML = `<div style='padding:20px; color:var(--ink3)'>Failed to load faculty data (status ${res.status}).</div>`;
+            return;
+          }
+          list = await res.json();
+        } catch (err) {
+          console.error('Network error when fetching faculty data', err);
+          showToast('Network error loading faculty data', 'error');
+          container.innerHTML = `<div style='padding:20px; color:var(--ink3)'>Network error loading faculty data.</div>`;
+          return;
+        }
 
         container.innerHTML = `
-          <div class="section-header"><h3>Faculty Members Base</h3><button class="btn btn-blue" onclick="openFacultyModal()">+ Register Faculty Profile</button></div>
+          <div class="section-header">
+            <h3>Faculty Members Base</h3>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-ghost" onclick="downloadTemplate('faculty')">📥 Download Template</button>
+              <button class="btn btn-ghost" onclick="triggerBulkFile('faculty')">📤 Bulk Upload Excel</button>
+              <input type="file" id="bulkExcelInput" accept=".xlsx, .xls" style="display:none;" onchange="handleBulkUpload(this, 'faculty')">
+              <button class="btn btn-blue" onclick="openFacultyModal()">+ Register Faculty Profile</button>
+            </div>
+          </div>
           <div class="table-wrap">
             <table>
               <thead><tr><th>Database Reference ID</th><th>Faculty Name</th><th>Department Code</th><th>Designation Label</th><th>Status</th><th>Linked Syllabus Courses</th><th>Control Options</th></tr></thead>
@@ -193,7 +217,7 @@
             </table>
           </div>`;
       }
-
+      
       // ──────────────────────────────────────────────────
       //  3. VIEW ENGINE: COMPLETE STUDENT CRUD PORTAL
       // ──────────────────────────────────────────────────
@@ -204,7 +228,15 @@
         const list = await res.json();
 
         container.innerHTML = `
-          <div class="section-header"><h3>Active Enrolled Students</h3><button class="btn btn-blue" onclick="openStudentModal()">+ Enroll New Student Account</button></div>
+          <div class="section-header">
+            <h3>Active Enrolled Students</h3>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-ghost" onclick="downloadTemplate('students')">📥 Download Template</button>
+              <button class="btn btn-ghost" onclick="triggerBulkFile('students')">📤 Bulk Upload Excel</button>
+              <input type="file" id="bulkExcelInput" accept=".xlsx, .xls" style="display:none;" onchange="handleBulkUpload(this, 'students')">
+              <button class="btn btn-blue" onclick="openStudentModal()">+ Enroll New Student Account</button>
+            </div>
+          </div>
           <div class="table-wrap">
             <table>
               <thead><tr><th>Student Roll Identifier</th><th>Full Name Profile</th><th>Branch Node</th><th>Current Term Stage</th><th>Academic Batch</th><th>Record Status</th><th>Management Matrix</th></tr></thead>
@@ -237,7 +269,55 @@
         const list = await res.json();
 
         container.innerHTML = `
-          <div class="section-header"><h3>Curriculum Catalog Blueprints</h3><button class="btn btn-blue" onclick="openSubjectModal()">+ Add Course Mapping</button></div>
+          <div class="section-header">
+            <h3>Curriculum Catalog Blueprints</h3>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-ghost" onclick="downloadTemplate('subjects')">📥 Download Template</button>
+              <button class="btn btn-ghost" onclick="triggerBulkFile('subjects')">📤 Bulk Upload Excel</button>
+              <input type="file" id="bulkExcelInput" accept=".xlsx, .xls" style="display:none;" onchange="handleBulkUpload(this, 'subjects')">
+              <button class="btn btn-blue" onclick="openSubjectModal()">+ Add Course Mapping</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Course Catalog Code</th><th>Subject Heading Label</th><th>Branch Allocation</th><th>Assigned Weight Credits</th><th>Target Term Mapping</th><th>Options</th></tr></thead>
+              <tbody>
+                ${list.map(sub=>`
+                <tr>
+                  <td class="td-bold">${sub.subject_code}</td>
+                  <td><strong>${sub.subject_name}</strong></td>
+                  <td>${sub.branch}</td>
+                  <td>${sub.credits} Course Credits</td>
+                  <td>Semester ${sub.semester}</td>
+                  <td>
+                    <button class="btn btn-blue btn-sm" onclick="openSubjectModal(${sub.id}, '${escape(JSON.stringify(sub))}')">✏️ Edit</button>
+                    <button class="btn btn-ghost btn-sm" style="color:var(--red-c)" onclick="deleteSubjectEntity(${sub.id})">✕ Drop</button>
+                  </td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>`;
+      }
+
+      // ──────────────────────────────────────────────────
+      //  4. VIEW ENGINE: COMPLETE SUBJECT CRUD PORTAL
+      // ──────────────────────────────────────────────────
+      else if(viewId === 'subjects') {
+        document.getElementById('pageTitle').textContent = 'University Course Catalog Blueprint';
+        container.innerHTML = `<div style='padding:20px; color:var(--ink3)'>Mapping academic catalogs...</div>`;
+        const res = await fetch('/api/admin/subjects');
+        const list = await res.json();
+
+        container.innerHTML = `
+          <div class="section-header">
+            <h3>Curriculum Catalog Blueprints</h3>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-ghost" onclick="downloadTemplate('subjects')">📥 Download Template</button>
+              <button class="btn btn-ghost" onclick="triggerBulkFile('subjects')">📤 Bulk Upload Excel</button>
+              <input type="file" id="bulkExcelInput" accept=".xlsx, .xls" style="display:none;" onchange="handleBulkUpload(this, 'subjects')">
+              <button class="btn btn-blue" onclick="openSubjectModal()">+ Add Course Mapping</button>
+            </div>
+          </div>
           <div class="table-wrap">
             <table>
               <thead><tr><th>Course Catalog Code</th><th>Subject Heading Label</th><th>Branch Allocation</th><th>Assigned Weight Credits</th><th>Target Term Mapping</th><th>Options</th></tr></thead>
@@ -497,6 +577,96 @@
         if(res.ok) { showToast("Syllabus catalog dropped.", "success"); switchTab('subjects'); }
       }
     }
+
+    // ─────────────────────────────────────────────────────────
+    //  BULK EXCEL OPERATIONS ENGINE
+    // ─────────────────────────────────────────────────────────
+    
+    function triggerBulkFile(moduleType) {
+      document.getElementById('bulkExcelInput').click();
+    }
+
+    function downloadTemplate(moduleType) {
+      let headers = [];
+      let sampleData = [];
+      let filename = "";
+
+      if (moduleType === 'faculty') {
+        headers = ["Faculty Name", "Corporate Email", "Default Password", "Department", "Designation Label"];
+        sampleData = [["Dr. Jane Doe", "jane.doe@university.edu", "demo123", "CSE", "Associate Professor"]];
+        filename = "Faculty_Bulk_Template.xlsx";
+      } else if (moduleType === 'students') {
+        headers = ["Full Name", "Primary Email", "Default Password", "Roll Identifier", "Branch Node", "Semester Track Level", "Academic Year"];
+        sampleData = [["John Smith", "john.smith@student.edu", "student123", "TIU-2024-CSE-045", "CSE", 5, "2024-25"]];
+        filename = "Students_Bulk_Template.xlsx";
+      } else if (moduleType === 'subjects') {
+        headers = ["Catalog Code", "Subject Heading", "Branch Allocation", "Course Credits", "Semester Plan Placement"];
+        sampleData = [["CS501", "Advanced Database Systems", "CSE", 4, 5]];
+        filename = "Subjects_Bulk_Template.xlsx";
+      }
+
+      const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleData]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Upload Template");
+      XLSX.writeFile(wb, filename);
+      showToast("Template spreadsheet generated and downloading.", "info");
+    }
+
+    function handleBulkUpload(input, moduleType) {
+      const file = input.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          
+          // Converts rows directly to JSON objects mapping headers to cell strings
+          const jsonPayload = XLSX.utils.sheet_to_json(worksheet);
+
+          if (jsonPayload.length === 0) {
+            showToast("The uploaded spreadsheet contains no active rows.", "error");
+            return;
+          }
+
+          const response = await fetch(`/api/admin/${moduleType}/bulk`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(jsonPayload)
+          });
+          
+          const resData = await response.json();
+          if (resData.success) {
+            showToast(resData.message, "success");
+            switchTab(moduleType); // Hot-reload table matrix data layouts view
+          } else {
+            showToast(resData.message, "error");
+          }
+        } catch (err) {
+          showToast("Failed to safely read or compile file configuration matrix layouts.", "error");
+          console.error(err);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+      input.value = ''; // Flush input track state cache
+    }
+
+    // Ensure a single global hidden file input exists for bulk uploads (avoids duplicate-id issues)
+    (function ensureGlobalBulkInput(){
+      if (!document.getElementById('bulkExcelInput')) {
+        const g = document.createElement('input');
+        g.type = 'file'; g.id = 'bulkExcelInput'; g.accept = '.xlsx, .xls'; g.style.display = 'none';
+        g.addEventListener('change', function(e){
+          // dataset.entityType will be set by triggerBulkFile
+          const moduleType = g.dataset.entityType || 'faculty';
+          handleBulkUpload(g, moduleType);
+        });
+        document.body.appendChild(g);
+      }
+    })();
 
     // ─────────────────────────────────────────────────────────
     //  ENGINE ACTIONS: GENERATE AND TRANSCRIPT PREVIEW EXPORTS

@@ -98,6 +98,152 @@ def get_dashboard_metrics():
 
 
 # ─────────────────────────────────────────────────────────
+#  HELPER: UNIFIED BULK UPLOAD VALIDATION & ERROR REPORTING
+# ─────────────────────────────────────────────────────────
+def validate_bulk_payload(payload, entity_type):
+    """Validates bulk payload structure and returns (is_valid, errors, clean_data)."""
+    errors = []
+    clean_data = []
+    
+    if not isinstance(payload, list):
+        errors.append("Payload must be a JSON array.")
+        return False, errors, []
+    
+    if len(payload) == 0:
+        errors.append("Empty payload.")
+        return False, errors, []
+    
+    # Define required and optional fields per entity type
+    schema = {
+        "faculty": {
+            "required": ["Faculty Name", "Corporate Email"],
+            "optional": {"Department": "", "Designation Label": "Assistant Professor", "Default Password": "demo123"}
+        },
+        "student": {
+            "required": ["Full Name", "Roll Identifier", "Primary Email"],
+            "optional": {"Branch Node": "CSE", "Semester Track Level": 1, "Academic Year": "2024-25", "Default Password": "student123"}
+        },
+        "subject": {
+            "required": ["Catalog Code", "Subject Heading", "Branch Allocation"],
+            "optional": {"Course Credits": 4, "Semester Plan Placement": 1}
+        }
+    }
+    
+    if entity_type not in schema:
+        errors.append(f"Unknown entity type: {entity_type}")
+        return False, errors, []
+    
+    entity_schema = schema[entity_type]
+    
+    for idx, row in enumerate(payload, start=1):
+        row_errors = []
+        for req_field in entity_schema["required"]:
+            if not row.get(req_field) or str(row.get(req_field)).strip() == "":
+                row_errors.append(f"Missing '{req_field}'")
+        
+        if row_errors:
+            errors.append(f"Row {idx}: {'; '.join(row_errors)}")
+            continue
+        
+        clean_row = {}
+        for req in entity_schema["required"]:
+            clean_row[req] = str(row.get(req)).strip()
+        for opt, default in entity_schema["optional"].items():
+            clean_row[opt] = row.get(opt, default)
+        
+        clean_data.append(clean_row)
+    
+    return len(errors) == 0, errors, clean_data
+
+
+# ─────────────────────────────────────────────────────────
+#  API: BULK UPLOAD HANDLERS
+# ─────────────────────────────────────────────────────────
+
+@app.route("/api/admin/faculty/bulk", methods=["POST"])
+def api_faculty_bulk():
+    payload = request.get_json() or []
+    is_valid, errors, clean_data = validate_bulk_payload(payload, "faculty")
+    if not is_valid:
+        return jsonify({"success": False, "errors": errors}), 400
+    
+    commit_count = 0
+    try:
+        for row in clean_data:
+            new_f = Faculty(
+                faculty_name=row.get("Faculty Name"), 
+                faculty_email=row.get("Corporate Email"),
+                faculty_password=row.get("Default Password"),
+                department=row.get("Department", ""), 
+                designation=row.get("Designation Label"),
+                is_active=True
+            )
+            db.session.add(new_f)
+            commit_count += 1
+        db.session.commit()
+        return jsonify({"success": True, "committed": commit_count, "message": f"Successfully bulk registered {commit_count} faculty profiles."})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": f"Database error: {str(e)}"}), 500
+
+
+@app.route("/api/admin/students/bulk", methods=["POST"])
+def api_students_bulk():
+    payload = request.get_json() or []
+    is_valid, errors, clean_data = validate_bulk_payload(payload, "student")
+    if not is_valid:
+        return jsonify({"success": False, "errors": errors}), 400
+    
+    commit_count = 0
+    try:
+        for row in clean_data:
+            new_s = Student(
+                student_name=row.get("Full Name"), 
+                student_email=row.get("Primary Email"),
+                student_password=row.get("Default Password"), 
+                roll_no=row.get("Roll Identifier"),
+                branch=row.get("Branch Node"), 
+                current_sem=int(row.get("Semester Track Level")),
+                academic_year=row.get("Academic Year"), 
+                is_active=True
+            )
+            db.session.add(new_s)
+            commit_count += 1
+        db.session.commit()
+        return jsonify({"success": True, "committed": commit_count, "message": f"Successfully bulk enrolled {commit_count} student accounts."})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": f"Database error: {str(e)}"}), 500
+
+
+@app.route("/api/admin/subjects/bulk", methods=["POST"])
+def api_subjects_bulk():
+    payload = request.get_json() or []
+    is_valid, errors, clean_data = validate_bulk_payload(payload, "subject")
+    if not is_valid:
+        return jsonify({"success": False, "errors": errors}), 400
+    
+    commit_count = 0
+    try:
+        for row in clean_data:
+            new_sub = Subject(
+                subject_code=row.get("Catalog Code"), 
+                subject_name=row.get("Subject Heading"),
+                branch=row.get("Branch Allocation"), 
+                credits=int(row.get("Course Credits")),
+                semester=int(row.get("Semester Plan Placement")), 
+                is_active=True
+            )
+            db.session.add(new_sub)
+            commit_count += 1
+        db.session.commit()
+        return jsonify({"success": True, "committed": commit_count, "message": f"Successfully cataloged {commit_count} curriculum courses."})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": f"Database error: {str(e)}"}), 500
+
+
+# ─────────────────────────────────────────────────────────
 #  API: CRUDS MANAGEMENT ENGINE (FACULTY)
 # ─────────────────────────────────────────────────────────
 @app.route("/api/admin/faculty", methods=["GET", "POST"])
