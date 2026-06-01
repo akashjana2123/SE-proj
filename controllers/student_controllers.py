@@ -1,11 +1,11 @@
 import os
 import datetime
 from flask import current_app as app, render_template, request, jsonify, session, redirect, url_for
-from models import db, Student, Mark, Subject, Result, AuditLog, Backlog, ResultDetail
+from models import db, Student, Mark, Subject, Result, AuditLog, Backlog, ResultDetail, Faculty
 from sqlalchemy import func
 
 # Ensure reports directory exists locally
-REPORTS_DIR = os.path.join(os.getcwd(), 'reports')
+REPORTS_DIR = os.path.join(os.getcwd(), 'reports') 
 if not os.path.exists(REPORTS_DIR):
     os.makedirs(REPORTS_DIR)
 
@@ -21,43 +21,74 @@ def get_logged_student():
 #  STUDENT BASE ROUTE (LOADS DASHBOARD)
 # ─────────────────────────────────────────────────────────
 @app.route("/student_dashboard", methods=["GET"])
+@app.route("/student_dashboard", methods=["GET"])
 def student_dashboard():
     student = get_logged_student()
     if not student:
         return redirect(url_for("login"))
     
-    # Calculate Admitted Year from Academic Year string (e.g., "2024-25" -> "2024")
     admitted_year = student.academic_year.split('-')[0] if '-' in student.academic_year else student.academic_year
     
-    # Fetch latest published CGPA & SGPA
+    # 1. Pull the computed result metrics out from the database
     latest_result = Result.query.filter_by(student_id=student.student_id, status='PUBLISHED')\
                                 .order_by(Result.semester.desc()).first()
     
     current_sgpa = latest_result.sgpa if latest_result else 0.0
     current_cgpa = latest_result.cgpa if latest_result else 0.0
-    
-    # Total completed semesters based on published records
     completed_sems = Result.query.filter_by(student_id=student.student_id, status='PUBLISHED').count()
     
-    # Count of active backlogs
-    active_backlogs_count = Backlog.query.filter_by(student_id=student.student_id, status='ACTIVE').count()
+    # 2. Extract unresolved backlogs along with their assigned instructors
+    backlog_query = db.session.query(Backlog, Subject, Faculty).\
+        join(Subject, Backlog.subject_id == Subject.subject_id).\
+        join(Faculty, Backlog.faculty_id == Faculty.faculty_id).\
+        filter(Backlog.student_id == student.student_id, Backlog.status == 'ACTIVE').all()
+        
+    compiled_backlogs = [{
+        "semester": sub.semester,
+        "subject_code": sub.subject_code,
+        "subject_name": sub.subject_name,
+        "faculty_name": fac.faculty_name,
+        "faculty_email": fac.faculty_email,
+        "academic_year": bl.academic_year
+    } for bl, sub, fac in backlog_query]
 
     student_data = {
-        "name": student.student_name,
-        "email": student.student_email,
-        "roll_no": student.roll_no,
-        "current_sem": student.current_sem,
-        "section": student.section or "N/A",
-        "branch": student.branch,
-        "academic_year": student.academic_year,
-        "admitted_year": admitted_year,
-        "sgpa": current_sgpa,
-        "cgpa": current_cgpa,
-        "completed_sems": completed_sems,
-        "backlogs_count": active_backlogs_count
+        "id": student.student_id, "name": student.student_name, "email": student.student_email,
+        "roll_no": student.roll_no, "current_sem": student.current_sem, "section": student.section or "N/A",
+        "branch": student.branch, "academic_year": student.academic_year, "admitted_year": admitted_year,
+        "sgpa": current_sgpa, "cgpa": current_cgpa, "completed_sems": completed_sems,
+        "backlogs_count": len(compiled_backlogs)
     }
 
-    return render_template("student.html", student=student_data)
+    # 3. Pull published results for the transcript view engine with integer cast indexing
+    published_results = Result.query.filter_by(student_id=student.student_id, status='PUBLISHED').all()
+    results_map = {}
+    for r in published_results:
+        details = ResultDetail.query.filter_by(result_id=r.result_id).all()
+        course_rows = []
+        for d in details:
+            sub_info = Subject.query.get(d.subject_id)
+            course_rows.append({
+                "code": sub_info.subject_code if sub_info else "N/A",
+                "name": sub_info.subject_name if sub_info else "Unknown",
+                "credits": d.credits, 
+                "marks": d.marks, 
+                "grade": d.grade, 
+                "grade_point": d.grade_point if d.grade_point else 0.0
+            })
+        # Map with integer keys matching range(1,9) in the template loop
+        results_map[int(r.semester)] = { "summary": r, "details": course_rows }
+
+    # Generate a clean timestamp string for the footer
+    current_date_str = datetime.datetime.now().strftime("%d %b %Y")
+
+    return render_template(
+        "student.html",
+        student=student_data,
+        backlogs=compiled_backlogs,
+        results_map=results_map,
+        current_date_str=current_date_str
+    )
 
 # ─────────────────────────────────────────────────────────
 #  API: FETCH DATA FOR A SPECIFIC SEMESTER
